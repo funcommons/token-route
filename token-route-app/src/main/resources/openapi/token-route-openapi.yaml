@@ -1,0 +1,170 @@
+openapi: 3.0.3
+info:
+  title: token-route
+  version: "1.0"
+  description: 通用 API 路由服务——路由决议 + 条目容量治理（02_接口契约 V2.1 冻结 /v1 契约的机读导出件）
+servers:
+  - url: http://token-route:9302
+paths:
+  /v1/ping:
+    get:
+      operationId: ping
+      tags: [contract]
+      summary: 契约面探活
+      responses:
+        "200":
+          description: 统一信封
+  /v1/resolve:
+    post:
+      operationId: resolve
+      tags: [contract]
+      summary: 取路由 resolve（并发预占，返回 lease_id）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [table_id]
+              properties:
+                table_id: { type: string }
+                session_id: { type: string, maxLength: 128 }
+                biz_params:
+                  type: object
+                  maxProperties: 64
+                  additionalProperties: { type: [string, number] }
+      responses:
+        "200":
+          description: "{entry_id, data_json, lease_id, affinity: HIT|NEW|NONE, reasons[]}；EMPTY 不抛错"
+  /v1/report:
+    post:
+      operationId: report
+      tags: [contract]
+      summary: 结果回填（三态，批量 ≤100；存在拒收 → 10700）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reports]
+              properties:
+                reports:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items:
+                    type: object
+                    required: [entry_id, lease_id, result]
+                    properties:
+                      entry_id: { type: string }
+                      lease_id: { type: string }
+                      result: { type: string, enum: [SUCCESS, RETRYABLE_FAIL, DISABLE_FAIL] }
+                      rate_units: { type: number, default: 1 }
+                      latency_ms: { type: integer }
+                      session_id: { type: string }
+      responses:
+        "200":
+          description: "{accepted, rejected:[{index, code, message}]}；补发纪律=只补发 rejected"
+  /v1/affinity/detach:
+    post:
+      operationId: detach
+      tags: [contract]
+      summary: 亲和解除（幂等；无绑定返回 detached=false）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [table_id, session_id]
+              properties:
+                table_id: { type: string }
+                session_id: { type: string }
+      responses:
+        "200":
+          description: "{detached: true|false}"
+  /v1/refresh/{tid}:
+    post:
+      operationId: refresh
+      tags: [contract]
+      summary: 立即拉取 refresh_url 并生效（失败保旧值，pulled=0 + error）
+      parameters:
+        - name: tid
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: "{pulled, upserted, removed, elapsed_ms[, error]}"
+  /v1/ops/tables/{tid}/status:
+    get:
+      operationId: opsTableStatus
+      tags: [ops]
+      summary: 表 + 条目实时状态（判定态/计数/并发占用/桶水位/活跃亲和数）
+      parameters:
+        - name: tid
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 表元数据 + entries[] + affinity_active_count
+  /v1/ops/resolve-logs:
+    get:
+      operationId: opsResolveLogs
+      tags: [ops]
+      summary: 决议日志（ring 热窗 7d；全量走结构化日志）
+      parameters:
+        - { name: table_id, in: query, required: true, schema: { type: string } }
+        - { name: from, in: query, schema: { type: integer, format: int64 } }
+        - { name: to, in: query, schema: { type: integer, format: int64 } }
+        - { name: result, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: size, in: query, schema: { type: integer, default: 100 } }
+      responses:
+        "200":
+          description: 单行 JSON 数组
+  /v1/ops/affinity-events:
+    get:
+      operationId: opsAffinityEvents
+      tags: [ops]
+      summary: 亲和事件史（BIND|DETACH）
+      parameters:
+        - { name: table_id, in: query, required: true, schema: { type: string } }
+        - { name: type, in: query, schema: { type: string, enum: [BIND, DETACH] } }
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: size, in: query, schema: { type: integer, default: 100 } }
+      responses:
+        "200":
+          description: 亲和事件数组
+  /v1/ops/state-logs:
+    get:
+      operationId: opsStateLogs
+      tags: [ops]
+      summary: 状态迁移史（from/to/原因/时刻/触发方）
+      parameters:
+        - { name: entry_id, in: query, required: true, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: size, in: query, schema: { type: integer, default: 100 } }
+      responses:
+        "200":
+          description: 迁移史数组
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      description: 6 字段统一信封（error 为空时省略，NON_NULL）
+      required: [code, message, data, trace_id, timestamp]
+      properties:
+        code: { type: integer, example: 0 }
+        message: { type: string }
+        data: {}
+        error:
+          type: array
+          items: { type: object }
+        trace_id: { type: string }
+        timestamp: { type: integer, format: int64 }
+tags:
+  - name: contract
+  - name: ops

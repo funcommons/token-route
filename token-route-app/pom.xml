@@ -92,6 +92,25 @@
                     </environmentVariables>
                 </configuration>
             </plugin>
+            <!-- IT 走 failsafe（*IT 命名 + @EnabledIfSystemProperty("tr.it") 门控）：
+                 mvn verify -Dtr.it=true 启用；jacoco argLine 两阶段共用，IT 覆盖计入同一 exec -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <environmentVariables>
+                        <TESTCONTAINERS_RYUK_DISABLED>true</TESTCONTAINERS_RYUK_DISABLED>
+                    </environmentVariables>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

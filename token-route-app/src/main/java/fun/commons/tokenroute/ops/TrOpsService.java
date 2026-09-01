@@ -104,7 +104,7 @@ public class TrOpsService {
     /** TR-OPS-002：决议日志（ring 热窗；from/to 为 epoch ms，result=ok|empty 可选过滤） */
     public List<Object> resolveLogs(String tid, Long from, Long to, String result, int page, int size) {
         List<String> all = redis.stringTemplate().opsForList().range(keys.logResolve(tid), 0, -1);
-        return filterPage(all, from, to, result, "at", page, size);
+        return filterPage(all, from, to, result, "result", page, size);
     }
 
     /** TR-OPS-003：亲和事件史（type=BIND|DETACH） */

@@ -123,10 +123,10 @@ public class TrResolveService {
         List<TrEntry> candidates = entries.stream().filter(e -> e.selectable(now)).toList();
 
         // —— 过滤链：filter_script 谓词（参数 × entry.data_json，逐条目求值）——
+        long degradedBefore = scriptDegradedTotal.get();
         candidates = applyFilterScript(table, req, candidates);
 
         List<String> reasons = new ArrayList<>();
-        boolean scriptDegraded = false;
 
         // —— 亲和判定（表开亲和且 session 非空；L2 态域 + 容量双校验）——
         boolean useAffinity = table.isAffinityEnabled()
@@ -207,12 +207,14 @@ public class TrResolveService {
         if (pool.isEmpty() && !candidates.isEmpty() && reasons.contains(TrResolveResponse.R_CAPACITY)) {
             return TrResolveResponse.empty(List.of(TrResolveResponse.R_CAPACITY));
         }
-        if (scriptDegraded) {
+        // 脚本降级计数增量（filter/selector 求值异常）→ 原因码随 EMPTY 返回（02 §6）
+        if (scriptDegradedTotal.get() > degradedBefore) {
             reasons.add(TrResolveResponse.R_SCRIPT_DEGRADED);
         }
-        return TrResolveResponse.empty(candidates.isEmpty()
-                ? List.of(TrResolveResponse.R_ALL_FILTERED)
-                : List.copyOf(new HashSet<>(reasons)));
+        if (candidates.isEmpty() && reasons.isEmpty()) {
+            reasons.add(TrResolveResponse.R_ALL_FILTERED);
+        }
+        return TrResolveResponse.empty(List.copyOf(new HashSet<>(reasons)));
     }
 
     /** 键不存在 → 单飞同步回源一次；仍不存在 = 冷启动失败；存在（含空集）返回集合。

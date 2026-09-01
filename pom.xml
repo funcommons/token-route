@@ -62,10 +62,57 @@
                     </execution>
                     <execution>
                         <id>report</id>
-                        <phase>test</phase>
+                        <phase>verify</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
+                    </execution>
+                    <!-- 07_实施计划 §覆盖率门槛：总行 ≥80% / 分支 ≥70%；
+                         TrCode / 脚本引擎核心 线 ≥90%（退避与租约计算在 Lua 中，无对应 Java Util）。
+                         failsafe IT 与 surefire 单测写同一 jacoco.exec，门槛按全量口径核验；
+                         无 Docker 环境跳过门槛���-Djacoco.skip=true -->
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.70</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                                <rule>
+                                    <element>CLASS</element>
+                                    <includes>
+                                        <include>fun.commons.tokenroute.common.TrCode</include>
+                                        <include>fun.commons.tokenroute.engine.TrScriptEngine</include>
+                                        <include>fun.commons.tokenroute.engine.TrScriptFunctions</include>
+                                        <include>fun.commons.tokenroute.engine.TrScriptLoader</include>
+                                        <include>fun.commons.tokenroute.engine.TrMethodBlacklistCustomizer</include>
+                                    </includes>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.90</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

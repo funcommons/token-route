@@ -19,4 +19,20 @@
 
 - 结构化日志：`[TR-RESOLVE]` / `[TR-STATE]` / `[TR-SCRIPT]` / `[TR-FEED]` 单行 → 文件（P1 过渡）→ Loki（M4 起，01 §9）。
 - ring 仅 ops 查询热窗（`/v1/ops/*`），不作告警数据源。
-- 计数器（script_degraded_total / lease_reclaim）当前为进程内存，暴露 `/metrics` 属 P2 增强（随 ops 可视化页面）。
+- **Micrometer 指标**（⑤.1 起内置）：`GET /actuator/prometheus`（Prometheus 抓取格式）；`/actuator/health` 含 `tokenRouteRedis` 连通性（SLI#8）。
+
+### 指标对照（⑤.1 落地；Prometheus 渲染名）
+
+| SLI | 指标 | 说明 |
+|---|---|---|
+| #1 resolve EMPTY 率 | `tr_resolve_total{outcome="empty\|ok"}` | EMPTY 率 = empty / (empty+ok) |
+| #2 resolve P99 | `tr_resolve_latency_seconds`（timer） | histogram_quantile(0.99, …) |
+| #3 report P99 | `tr_report_latency_seconds`（timer） | 同上 |
+| #4 FEED 刷新失败率 | `tr_feed_pull_total{result="ok\|fail"}` | 失败保旧值语义不变 |
+| #5 script 降级增速 | `tr_script_degraded`（gauge，进程内累计） | filter/selector 运行期异常累计 |
+| #6 租约超时回收数 | **待 L6 接线后提供**（lease_reclaim 脚本已就绪未接线，见 CODING-PROGRESS P2） | 现以 ops `conc_active` 对照 |
+| #7 状态迁移突增 | `tr_state_transition_total{to=…}` | to ∈ ACTIVE/DEGRADED_*/FROZEN/OFFLINE |
+| #8 Redis 连通性 | `/actuator/health` → `tokenRouteRedis` | down 即 P0 |
+| #9 app 存活 | `/v1/ping` 或 `/actuator/health` | 双实例任一存活即 SLA 内 |
+
+> ⚠️ `/actuator/**` 不在两面鉴权路径（`/v1/**`）内：生产以网络隔离收敛，或设独立 `management.server.port` 只绑内网。

@@ -161,12 +161,30 @@
   full-gate 作业 ~3min）**success**，runner 上 daocloud 可达，Testcontainers IT + JaCoCo 闸门全过。
 - README 加 workflow 徽章。
 
+## S10 fwk4j issue 提交（✅ 开发原则一②通道）
+
+- **[#19](https://github.com/funcommons/framework4j/issues/19)** `[web]`：GlobalExceptionHandler 引用
+  spring-jdbc/dao 异常（BadSqlGrammarException/DataIntegrityViolationException/DuplicateKeyException，
+  javap 常量池实测）但 spring-jdbc 为 optional → 消费方不带 spring-jdbc 时启动期内省即
+  NoClassDefFoundError。附最小复现工程（starter-web + fwk4j-web，空 @SpringBootApplication 上下文测试即挂）。
+  **S0-b 误诊翻案**：当时结论「v1.5.1 打包遗漏 spring-jdbc 声明」是错的——pom 有声明但为 optional，
+  本质是 optional 依赖被必加载类引用；app pom 注释已按事实纠正。
+- **[#20](https://github.com/funcommons/framework4j/issues/20)** `[accesstoken]`：Policy.key 实为
+  「必备 claims 字段名列表」（非签名密钥），setKeyFromString 误导性极强；且 hashSalt/policies/
+  TokenType 校验全部延迟到首次 generateToken 运行时才暴露（NPE → 未定义 TokenType → 缺 Key 字段 →
+  hashSalt 不能为空，S8 实踩顺序）。建议文档澄清 + 启动期 fail-fast。
+- 自修：docs 01/03/配置手册 5 处 `LPTRIM` 笔误改 `LTRIM`（自有文档笔误，不属 fwk4j）。
+- 提交通道坑：api.github.com 匿名限流（共享 IP）→ 用 git credential fill 的存储凭据认证；
+  PowerShell 5.1 需显式 TLS1.2，Get-Content -Raw 在该链路会返回 PSObject 需改 ReadAllText。
+
 ## P1 收尾状态（全部出口闸门通过）
 
 - 全模块 `mvn test`：**app 216 + sdk 9 = 225 绿**；IT（Testcontainers，failsafe）：**34 绿**；冒烟 8 组 ×2 全绿。
 - 覆盖率门槛（S8）：行 92.8% / 分支 82.9% / 引擎类 ≥92%，`mvn verify -Dtr.it=true` 全绿。
 - P2 待办（不在 P1 范围）：report 批量 pipeline、/metrics 暴露、channel-legacy 预设、生产 Redisson 锁配置、Loki 接入。
-- fwk4j issue 候选（开发原则一②通道）：web pom 缺 spring-jdbc 声明（本项目已临时补依赖绕过）。
+- fwk4j issue（开发原则一②通道）：已提交 [#19](https://github.com/funcommons/framework4j/issues/19)
+  （web optional spring-jdbc 致启动失败，附复现）与 [#20](https://github.com/funcommons/framework4j/issues/20)
+  （accesstoken Policy.key 语义 + 校验时机），详见 S10。
 
 ## 步骤消耗记录
 
@@ -185,3 +203,4 @@
 | S7 | ~260 | 3 轮（mock 镜像源 / 跨轮状态 / lettuce 超时） |
 | S8 | ~1000（9 测试类 + pom 门槛 + 2 处主代码修复 + 文档） | 8 轮（Mockito varargs / isMember 重载 / deep-stub 泛型 / 降级快照位置 / fwk4j policy 语义 / Lua 参数下标） |
 | S9 | ~60（ci.yml + README 徽章 + 本节） | 首轮即成；首跑 full-gate success（daocloud 可达性验证通过） |
+| S10 | ~90（issue ×2 + pom 注释纠正 + LTRIM 自修 + 本节） | 5 轮（S0-b 误诊翻案 / 复现工程 jitpack 仓库 / PS TLS1.2 / Get-Content 对象化 / JSON 转义弃 sed 改 ConvertTo-Json） |

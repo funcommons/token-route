@@ -49,8 +49,9 @@
             <artifactId>groovy</artifactId>
             <version>${groovy.version}</version>
         </dependency>
-        <!-- fwk4j-web GlobalExceptionHandler 引用 spring-jdbc/dao 异常类型但未声明依赖（v1.5.1 打包遗漏），
-             token-route 无数据源，仅补齐以满足反射内省；待 fwk4j 上游修 pom 后移除（issue 候选） -->
+        <!-- fwk4j-web 的 spring-jdbc 为 optional，但其 GlobalExceptionHandler 的 @ExceptionHandler 方法签名
+             引用 spring-jdbc/dao 异常类型，未携带 spring-jdbc 的消费方启动期内省即 NoClassDefFoundError
+             （上游 issue：funcommons/framework4j#19）；token-route 无数据源，补依赖绕过，上游修复后可移除 -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>

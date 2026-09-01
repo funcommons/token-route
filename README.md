@@ -63,8 +63,8 @@
 # 单测（无 Docker 依赖）
 mvn test
 
-# 集成测试（需 Docker；Testcontainers + Redis 容器）
-mvn test -Dtr.it=true -Dtest='TrRedisLuaIT,TrResolveFlowIT,TrReportFlowIT,TrFeedEvalIT,TrOpsFlowIT'
+# 完整门槛构建（单测 + IT + JaCoCo 覆盖率闸门，需 Docker；无 Docker 时加 -Djacoco.skip=true 只跳门槛）
+mvn verify -Dtr.it=true
 
 # 本地起服务（app:9302 + redis + mock FEED 上游）
 docker compose up -d --build
@@ -80,6 +80,10 @@ bash scripts/smoke.sh 1 && bash scripts/smoke.sh 2
   <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
+
+**覆盖率闸门**（07_实施计划 §覆盖率）：总行 ≥80% / 分支 ≥70%；TrCode 与脚本引擎核心类 ≥90%。
+当前实测（`mvn verify -Dtr.it=true`，单测+IT 合并口径）：**行 92.8% / 分支 82.9%**；
+TrCode、TrScriptFunctions、TrMethodBlacklistCustomizer 100%，TrScriptEngine/TrScriptLoader 92%。
 
 > 网络受限环境：Docker 镜像源与 jitpack 说明见 `CODING-PROGRESS.md` 环境节；Dockerfile 基础镜像走 ARG 可覆盖。
 

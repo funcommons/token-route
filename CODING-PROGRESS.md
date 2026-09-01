@@ -128,9 +128,34 @@
 - SLI 告警建议：`docs/用户文档/SLI告警建议.md`（9 项指标/阈值/级别/处置）。
 - S7 遗留知识：冒烟每轮先 FLUSHALL + 会话名带轮次（Redis 跨轮残留会让 NEW 变 HIT）；lettuce 命令超时经 `timeout: 3s` 下调，Redis 故障语义靠 DataAccessException 兜底捕获。
 
+## S8 覆盖率门槛落地（✅ 07 §覆盖率全达标）
+
+- pom：JaCoCo 增加 `check` 执行（BUNDLE 行 ≥80%/分支 ≥70%；TrCode + 引擎核心类 CLASS 行 ≥90%），
+  `report` 移到 verify 阶段；IT 由 surefire 手工 `-Dtest` 正规化为 **failsafe 阶段**（`*IT` 命名 +
+  `@EnabledIfSystemProperty("tr.it")` 门控不变），jacoco argLine 两阶段共用同一 exec → 门槛按全量口径核验。
+- 门槛命令：`mvn verify -Dtr.it=true`（无 Docker 环境加 `-Djacoco.skip=true` 只跳门槛）。
+- 补 9 个纯单测类（无 Spring 上下文/无 Docker）：resolve 决策全流程分支 ×27、条目模型 ×11、
+  FEED 拉取（JDK HttpServer 进程内真实上游）×11、评估器 ×6、report 分支 ×10、ops 查询 ×7、
+  鉴权拦截器 ×10（含 fwk4j 真实签发 token 正向用例）、控制器直调 ×8、脚本函数边界 ×4。
+- **实测：行 92.8%（1166/1257）、分支 82.9%（501/604）；TrCode/TrScriptFunctions/TrMethodBlacklist 100%，
+  TrScriptEngine/TrScriptLoader 92%。测试规模：app 单测 216 + sdk 9，IT 34，全绿。**
+- **测试揪出并修复 2 个主代码 P1 bug**：
+  ① `TrResolveService`：`scriptDegraded` 局部变量从未置位 → `SCRIPT_DEGRADED` 原因码永不返回；
+     且 `candidates.isEmpty()` 分支会吞掉已累积 reasons——改为降级计数增量快照比对 + ALL_FILTERED 仅兜底。
+  ② `TrOpsService.resolveLogs`：result 过滤的 tagField 误传 `"at"` → result=ok|empty 过滤恒为空——改为 `"result"`。
+- S8 遗留知识（后续步骤避坑）：
+  - Mockito varargs：单颗 `any()` **不**弹性匹配 `execute(script, keys, args...)` 的展开参数，
+    必须 `any(Object[].class)`——否则桩全部落空、verdict 落默认值（本轮 25 个失败的同根因）。
+  - Spring Data Redis 3.x `SetOperations.isMember(K, Object...)` varargs 重载会让无类型 `any()` 选错重载 → 用 `anyString()`。
+  - deep-stub 链上 `when(t.opsForList().range(...))` 泛型固定为声明类型，传 Map 行须显式子 mock + `doReturn`。
+  - fwk4j-accesstoken：`Policy.key` 是**必备 claims 字段名列表**（非签名密钥）；单测签发 token 需
+    `props.setPolicies({TYPE_ACCESS: policy})` + `policy.key=["uid"]` + claims 带 uid + `hashSalt` 非空。
+  - 上下文摘要中的"文件内容"可能与真实文件有出入（本次 filterPage 签名即失真），改码前以实际 Read 为准。
+
 ## P1 收尾状态（全部出口闸门通过）
 
-- 全模块 `mvn test`：**app 87 + sdk 9 = 96 绿**；IT（Testcontainers）：**30 绿**；冒烟 8 组 ×2 全绿。
+- 全模块 `mvn test`：**app 216 + sdk 9 = 225 绿**；IT（Testcontainers，failsafe）：**34 绿**；冒烟 8 组 ×2 全绿。
+- 覆盖率门槛（S8）：行 92.8% / 分支 82.9% / 引擎类 ≥92%，`mvn verify -Dtr.it=true` 全绿。
 - P2 待办（不在 P1 范围）：report 批量 pipeline、/metrics 暴露、channel-legacy 预设、生产 Redisson 锁配置、Loki 接入。
 - fwk4j issue 候选（开发原则一②通道）：web pom 缺 spring-jdbc 声明（本项目已临时补依赖绕过）。
 
@@ -149,3 +174,4 @@
 | S5 | ~420（含测试） | 3 轮（类型收窄 / YAML 断言 / SCAN 计数） |
 | S6 | ~420（含测试） | 3 轮（模块登记 / 泛型重载 / ReportResult 形状） |
 | S7 | ~260 | 3 轮（mock 镜像源 / 跨轮状态 / lettuce 超时） |
+| S8 | ~1000（9 测试类 + pom 门槛 + 2 处主代码修复 + 文档） | 8 轮（Mockito varargs / isMember 重载 / deep-stub 泛型 / 降级快照位置 / fwk4j policy 语义 / Lua 参数下标） |

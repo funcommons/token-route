@@ -26,6 +26,24 @@ services:
       REDIS_PORT: "6379"
       TR_API_KEY: ${TR_API_KEY:-dev-api-key}
       JWT_SECRET: ${JWT_SECRET:-tr-dev-secret-key-please-rotate-32ch}
+      TR_REDISSON_ENABLED: ${TR_REDISSON_ENABLED:-true}   # 双实例评估器互斥（上线检查单 §部署）
+    depends_on:
+      redis:
+        condition: service_healthy
+      mock-feed:
+        condition: service_started
+
+  # 第二实例（上线检查单 §部署：双实例水平扩展；scripts/verify-ha.sh 实测评估器互斥）
+  app2:
+    build: .
+    ports:
+      - "9303:9302"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      TR_API_KEY: ${TR_API_KEY:-dev-api-key}
+      JWT_SECRET: ${JWT_SECRET:-tr-dev-secret-key-please-rotate-32ch}
+      TR_REDISSON_ENABLED: ${TR_REDISSON_ENABLED:-true}
     depends_on:
       redis:
         condition: service_healthy

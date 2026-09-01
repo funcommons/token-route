@@ -195,6 +195,19 @@
   - 剩余 P2：report pipeline、channel-legacy 预设、Loki 接入（纯接线）。
 - 全量门槛：BUILD SUCCESS；**app 单测 222 + sdk 9 + IT 36**；覆盖率分支 82.4% / 行 92.8%。
 
+## S12 上线检查单 + 双实例互斥实测（✅ ①）
+
+- **双实例实测**：compose `app`(9302)/`app2`(9303) 双实例 + `TR_REDISSON_ENABLED=true`；
+  `scripts/verify-ha.sh` 观察 150s 窗（≥2 评估轮）：两实例 `tr_evaluator_run_total` 增量之和=3
+  （app +1 / app2 +2 交替持锁，每轮仅一家执行）→ **HA PASS**——互斥从单测/IT 语义变成部署事实；
+  失效形态（本地锁退化）时和值应 ≈2×轮数，脚本据此区分 PASS/FAIL。
+- 支撑改动：`TrMetrics.evaluatorRun()`（`tr_evaluator_run_total`，持锁成功才计数）+
+  yml `redisson.enabled: ${TR_REDISSON_ENABLED:false}` 环境变量化；SLI 文档对照表补「评估器活性」行。
+- **`docs/用户文档/上线检查单.md`**：安全轮换（三项默认开发值点列）/数据依赖（AOF、无 Cluster、
+  key-prefix）/部署（双实例+互斥实测步骤+健康检查+优雅停机）/可观测接入/上线后验证（含杀实例
+  演练）/回滚（镜像回退 + FEED 自愈语义）。
+- 全量门槛复验 BUILD SUCCESS（IT 36 + sdk 9；覆盖率分支 82.4% / 行 92.8%）；smoke run2 全绿。
+
 ## P1 收尾状态（全部出口闸门通过）
 
 - 全模块 `mvn test`：**app 216 + sdk 9 = 225 绿**；IT（Testcontainers，failsafe）：**34 绿**；冒烟 8 组 ×2 全绿。
@@ -223,3 +236,4 @@
 | S9 | ~60（ci.yml + README 徽章 + 本节） | 首轮即成；首跑 full-gate success（daocloud 可达性验证通过） |
 | S10 | ~90（issue ×2 + pom 注释纠正 + LTRIM 自修 + 本节） | 5 轮（S0-b 误诊翻案 / 复现工程 jitpack 仓库 / PS TLS1.2 / Get-Content 对象化 / JSON 转义弃 sed 改 ConvertTo-Json） |
 | S11 | ~1100（指引 + demo 工程 + metrics/redisson 实现 + 测试 + 文档） | 6 轮（健康组件命名冲突 / 增量编译残留 / mockito varargs 回归 / 跨行 sed 失配 / strongReference 签名 / IT 容器属性注入） |
+| S12 | ~180（verify-ha.sh + 检查单 + evaluator 指标 + compose 双实例 + 文档） | 2 轮（首轮即 PASS；观察窗计数换算校准） |

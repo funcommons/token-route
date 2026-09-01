@@ -30,6 +30,7 @@ public class TrMetrics {
     private final Counter reportRejected;
     private final Counter feedOk;
     private final Counter feedFail;
+    private final Counter evaluatorRun;
 
     public TrMetrics(MeterRegistry registry) {
         this.registry = registry;
@@ -42,6 +43,7 @@ public class TrMetrics {
             this.reportRejected = null;
             this.feedOk = null;
             this.feedFail = null;
+            this.evaluatorRun = null;
             return;
         }
         this.resolveLatency = Timer.builder("tr.resolve.latency").description("resolve 决策耗时").register(registry);
@@ -56,6 +58,8 @@ public class TrMetrics {
                 .tag("result", "ok").register(registry);
         this.feedFail = Counter.builder("tr.feed.pull").description("FEED 拉取次数")
                 .tag("result", "fail").register(registry);
+        this.evaluatorRun = Counter.builder("tr.evaluator.run").description("评估器执行轮数（持锁成功才计数）")
+                .register(registry);
     }
 
     public static TrMetrics noop() {
@@ -87,6 +91,14 @@ public class TrMetrics {
             return;
         }
         (success ? feedOk : feedFail).increment();
+    }
+
+    /** 评估器持锁执行一轮（双实例互斥实测：两实例计数之和 ≈ 分钟轮数，而非两倍） */
+    public void evaluatorRun() {
+        if (registry == null) {
+            return;
+        }
+        evaluatorRun.increment();
     }
 
     /** 条目状态���移（SLI#7 突增；to ∈ ACTIVE/DEGRADED_L1~L3/FROZEN/OFFLINE，tag 组合有限由 registry 缓存） */

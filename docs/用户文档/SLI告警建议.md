@@ -34,5 +34,6 @@
 | #7 状态迁移突增 | `tr_state_transition_total{to=…}` | to ∈ ACTIVE/DEGRADED_*/FROZEN/OFFLINE |
 | #8 Redis 连通性 | `/actuator/health` → `tokenRouteRedis` | down 即 P0 |
 | #9 app 存活 | `/v1/ping` 或 `/actuator/health` | 双实例任一存活即 SLA 内 |
+| 附加 评估器活性 | `tr_evaluator_run_total`（持锁成功才计数） | 双实例之和 ≈ 分钟轮数；≈2×轮数即互斥失效（`scripts/verify-ha.sh` 实测） |
 
 > ⚠️ `/actuator/**` 不在两面鉴权路径（`/v1/**`）内：生产以网络隔离收敛，或设独立 `management.server.port` 只绑内网。

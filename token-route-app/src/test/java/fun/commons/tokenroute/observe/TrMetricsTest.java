@@ -68,6 +68,15 @@ class TrMetricsTest {
     }
 
     @Test
+    void evaluatorRunCounterCountsEachRound() {
+        SimpleMeterRegistry r = new SimpleMeterRegistry();
+        TrMetrics m = new TrMetrics(r);
+        m.evaluatorRun();
+        m.evaluatorRun();
+        assertThat(r.get("tr.evaluator.run").counter().count()).isEqualTo(2.0);
+    }
+
+    @Test
     void noopSafelyDoesNothing() {
         TrMetrics noop = TrMetrics.noop();
         assertThatCode(() -> {

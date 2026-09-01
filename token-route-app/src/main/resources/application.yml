@@ -36,9 +36,9 @@ framework4j:
             max-idle: 20
             min-idle: 5
         # 生产双实例必开（⑤.2）：评估器 TrEvaluateJob 经 Redisson tryLock(0) 多实例互斥；
-        # 未开启时退化为���实例本地语义（TrRedissonLockIT 验证使能链路）。本地单实例可不开。
-        # redisson:
-        #   enabled: true
+        # 环境变量 TR_REDISSON_ENABLED=true 开启；未开启退化单实例本地语义（TrRedissonLockIT 验证使能链路）。
+        redisson:
+          enabled: ${TR_REDISSON_ENABLED:false}
   # jwt 鉴权模式（只验不签；mode=none/apikey 时仅装配不生效于拦截）
   access-token:
     enabled: true

@@ -93,6 +93,7 @@ public class TrEvaluateJob {
             if (moved + thawed > 0) {
                 log.info("[TR-STATE] 评估完成 moved={} thawed={} elapsed_ms={}", moved, thawed, clock.millis() - start);
             }
+            metrics.evaluatorRun();
         } finally {
             if (lock != null) {
                 lock.unlock();

@@ -1,5 +1,6 @@
 package fun.commons.tokenroute.it;
 
+import fun.commons.tokenroute.observe.TrMetrics;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpServer;
 import fun.commons.framework4j.redis.manager.MultiRedisManager;
@@ -83,7 +84,7 @@ class TrFeedEvalIT {
         MultiRedisManager manager = new MultiRedisManager();
         manager.registerRedisTemplate("main", redis);
         feed = new TrFeedRefreshService(new TrRedis(manager, "main"), keys, registry,
-                new ObjectMapper(), Clock.systemUTC());
+                new ObjectMapper(), Clock.systemUTC(), TrMetrics.noop());
     }
 
     @AfterAll

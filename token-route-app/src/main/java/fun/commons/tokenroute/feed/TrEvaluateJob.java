@@ -36,15 +36,18 @@ public class TrEvaluateJob {
     private final MultiRedisManager redisManager;
     private final String redisName;
     private final Clock clock;
+    private final fun.commons.tokenroute.observe.TrMetrics metrics;
 
     public TrEvaluateJob(TrRedis redis, TrKeySpace keys, TrTableRegistry registry,
-                         MultiRedisManager redisManager, TrProperties properties, Clock clock) {
+                         MultiRedisManager redisManager, TrProperties properties, Clock clock,
+                         fun.commons.tokenroute.observe.TrMetrics metrics) {
         this.redis = redis;
         this.keys = keys;
         this.registry = registry;
         this.redisManager = redisManager;
         this.redisName = properties.getRedisName();
         this.clock = clock;
+        this.metrics = metrics;
     }
 
     @Scheduled(fixedDelay = 60_000, initialDelay = 60_000)
@@ -77,9 +80,11 @@ public class TrEvaluateJob {
                         String verdict = String.valueOf(r.get(0));
                         if ("MOVED".equals(verdict)) {
                             moved++;
+                            metrics.stateTransition(String.valueOf(r.get(1)));
                             log.info("[TR-STATE] entry={} to={} calls={} fails={}", eid, r.get(1), r.get(2), r.get(3));
                         } else if ("THAWED".equals(verdict)) {
                             thawed++;
+                            metrics.stateTransition("ACTIVE");
                             log.info("[TR-STATE] entry={} 惰性解冻 → ACTIVE", eid);
                         }
                     }

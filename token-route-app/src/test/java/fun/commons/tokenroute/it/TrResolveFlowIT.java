@@ -1,5 +1,6 @@
 package fun.commons.tokenroute.it;
 
+import fun.commons.tokenroute.observe.TrMetrics;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fun.commons.framework4j.web.ApiException;
 import fun.commons.tokenroute.config.TrTableDefinition;
@@ -78,7 +79,7 @@ class TrResolveFlowIT {
         manager.registerRedisTemplate("main", redis);
         TrRedis trRedis = new TrRedis(manager, "main");
         service = new TrResolveService(trRedis, keys, registry, scripts, new TrScriptEngine(500),
-                new TrFeedBackfill.Noop(), new ObjectMapper(), Clock.systemUTC());
+                new TrFeedBackfill.Noop(), new ObjectMapper(), Clock.systemUTC(), TrMetrics.noop());
     }
 
     @AfterAll
@@ -145,7 +146,7 @@ class TrResolveFlowIT {
         MultiRedisManager manager = new MultiRedisManager();
         manager.registerRedisTemplate("main", redis);
         TrResolveService rrService = new TrResolveService(new TrRedis(manager, "main"), keys, registry,
-                scripts, new TrScriptEngine(500), new TrFeedBackfill.Noop(), new ObjectMapper(), Clock.systemUTC());
+                scripts, new TrScriptEngine(500), new TrFeedBackfill.Noop(), new ObjectMapper(), Clock.systemUTC(), TrMetrics.noop());
 
         redis.delete(keys.entryIds("rr-t"));
         seedEntry("rr-t", "e1", 100, 2, "ACTIVE", null);
@@ -167,7 +168,7 @@ class TrResolveFlowIT {
         MultiRedisManager manager = new MultiRedisManager();
         manager.registerRedisTemplate("main", redis);
         TrResolveService capService = new TrResolveService(new TrRedis(manager, "main"), keys, registry,
-                scripts, new TrScriptEngine(500), new TrFeedBackfill.Noop(), new ObjectMapper(), Clock.systemUTC());
+                scripts, new TrScriptEngine(500), new TrFeedBackfill.Noop(), new ObjectMapper(), Clock.systemUTC(), TrMetrics.noop());
 
         redis.delete(keys.entryIds("cap-t"));
         String eid = TrEntryId.of("cap-t", "full");
@@ -192,7 +193,7 @@ class TrResolveFlowIT {
         MultiRedisManager manager = new MultiRedisManager();
         manager.registerRedisTemplate("main", redis);
         TrResolveService svc = new TrResolveService(new TrRedis(manager, "main"), keys, reg,
-                scripts, new TrScriptEngine(500), new TrFeedBackfill.Noop(), new ObjectMapper(), Clock.systemUTC());
+                scripts, new TrScriptEngine(500), new TrFeedBackfill.Noop(), new ObjectMapper(), Clock.systemUTC(), TrMetrics.noop());
 
         redis.opsForSet().add(keys.entryIds("empty-t"), "placeholder");
         redis.opsForSet().remove(keys.entryIds("empty-t"), "placeholder"); // 键存在但空集
@@ -212,7 +213,7 @@ class TrResolveFlowIT {
         MultiRedisManager manager = new MultiRedisManager();
         manager.registerRedisTemplate("main", redis);
         TrResolveService svc = new TrResolveService(new TrRedis(manager, "main"), keys, reg,
-                scripts, new TrScriptEngine(500), new TrFeedBackfill.Noop(), new ObjectMapper(), Clock.systemUTC());
+                scripts, new TrScriptEngine(500), new TrFeedBackfill.Noop(), new ObjectMapper(), Clock.systemUTC(), TrMetrics.noop());
 
         assertThat(svc.resolve(req("off-t", null), null).getReasons())
                 .containsExactly(TrResolveResponse.R_TABLE_OFFLINE);

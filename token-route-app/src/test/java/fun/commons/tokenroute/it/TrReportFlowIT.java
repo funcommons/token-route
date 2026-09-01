@@ -1,5 +1,6 @@
 package fun.commons.tokenroute.it;
 
+import fun.commons.tokenroute.observe.TrMetrics;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fun.commons.framework4j.redis.manager.MultiRedisManager;
 import fun.commons.tokenroute.config.TrTableDefinition;
@@ -73,8 +74,8 @@ class TrReportFlowIT {
         manager.registerRedisTemplate("main", redis);
         TrRedis trRedis = new TrRedis(manager, "main");
         resolveService = new TrResolveService(trRedis, keys, registry, scripts, new TrScriptEngine(500),
-                new TrFeedBackfill.Noop(), new ObjectMapper(), Clock.systemUTC());
-        reportService = new TrReportService(trRedis, keys, registry, Clock.systemUTC());
+                new TrFeedBackfill.Noop(), new ObjectMapper(), Clock.systemUTC(), TrMetrics.noop());
+        reportService = new TrReportService(trRedis, keys, registry, Clock.systemUTC(), TrMetrics.noop());
 
         // 种子：单条目，TOKEN 限速 5000/1000ms
         redis.opsForSet().add(keys.entryIds(TID), EID);

@@ -10,6 +10,17 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
+# SLI 暴露（⑤.1，docs/用户文档/SLI告警建议.md §指标对照）
+# ⚠️ /actuator/** 不在两面鉴权路径（/v1/**）内：生产以网络隔离收敛，
+#    或改用独立 management.server.port 只绑内网网卡
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  health:
+    show-details: when-authorized
+
 # fwk4j MultiRedis（datasource default；token-route 仅 Redis，无 PG）
 framework4j:
   redis:
@@ -24,6 +35,10 @@ framework4j:
             max-active: 50
             max-idle: 20
             min-idle: 5
+        # 生产双实例必开（⑤.2）：评估器 TrEvaluateJob 经 Redisson tryLock(0) 多实例互斥；
+        # 未开启时退化为���实例本地语义（TrRedissonLockIT 验证使能链路）。本地单实例可不开。
+        # redisson:
+        #   enabled: true
   # jwt 鉴权模式（只验不签；mode=none/apikey 时仅装配不生效于拦截）
   access-token:
     enabled: true

@@ -48,6 +48,7 @@ public class TrResolveService {
     private final TrFeedBackfill backfill;
     private final ObjectMapper mapper;
     private final Clock clock;
+    private final fun.commons.tokenroute.observe.TrMetrics metrics;
 
     /** SLI：script_degraded_total（05 §7） */
     private final AtomicLong scriptDegradedTotal = new AtomicLong();
@@ -62,7 +63,8 @@ public class TrResolveService {
 
     public TrResolveService(TrRedis redis, TrKeySpace keys, TrTableRegistry registry,
                             TrScriptRegistry scripts, TrScriptEngine engine,
-                            TrFeedBackfill backfill, ObjectMapper mapper, Clock clock) {
+                            TrFeedBackfill backfill, ObjectMapper mapper, Clock clock,
+                            fun.commons.tokenroute.observe.TrMetrics metrics) {
         this.redis = redis;
         this.keys = keys;
         this.registry = registry;
@@ -71,6 +73,8 @@ public class TrResolveService {
         this.backfill = backfill;
         this.mapper = mapper;
         this.clock = clock;
+        this.metrics = metrics;
+        metrics.gauge("tr.script.degraded", scriptDegradedTotal);
     }
 
     public long scriptDegradedTotal() {
@@ -85,6 +89,7 @@ public class TrResolveService {
 
         TrResolveResponse resp = doResolve(table, req);
         writeResolveLog(table, req, callerId, resp, start);
+        metrics.resolve(start, resp.getEntryId() == null);
         log.info("[TR-RESOLVE] table={} session={} caller={} entry={} affinity={} reasons={} elapsed_ms={}",
                 tid, req.getSessionId(), callerId,
                 resp.getEntryId(), resp.getAffinity(), resp.getReasons(), clock.millis() - start);

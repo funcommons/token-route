@@ -74,6 +74,13 @@ public class TrConfig implements WebMvcConfigurer {
         return new TrRedis(manager, properties.getRedisName());
     }
 
+    /** SLI#8 Redis 连通性（/actuator/health 组件 tokenRouteRedis）；显式命名避开业务 bean 'trRedis'
+     *  ——Boot 会把 xxxHealthIndicator bean 推断为健康键 xxx，默认类名会与上方业务 bean 冲突 */
+    @Bean
+    public org.springframework.boot.actuate.health.HealthIndicator tokenRouteRedisHealth(TrRedis redis) {
+        return new fun.commons.tokenroute.observe.TrRedisHealthIndicator(redis);
+    }
+
     /** 应用时钟（窗口 score / lease deadline / Lua now；03 §1，测试可替换） */
     @Bean
     public java.time.Clock trClock() {

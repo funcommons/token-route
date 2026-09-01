@@ -10,6 +10,7 @@ import fun.commons.tokenroute.engine.TrScriptEngine;
 import fun.commons.tokenroute.engine.TrScriptExecutionException;
 import fun.commons.tokenroute.engine.TrScriptRegistry;
 import fun.commons.tokenroute.keyspace.TrKeySpace;
+import fun.commons.tokenroute.observe.TrMetrics;
 import fun.commons.tokenroute.redis.TrLua;
 import fun.commons.tokenroute.redis.TrRedis;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,13 +101,13 @@ class TrResolveServiceBranchTest {
         doReturn(List.of("NEW", "e1")).when(t).execute(same(TrLua.RESOLVE_BIND), anyList(), any(Object[].class));
 
         service = new TrResolveService(redis, keys, registry, scripts, engine, backfill,
-                mapper, Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC));
+                mapper, Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC), TrMetrics.noop());
     }
 
     private void reloadTables(TrTableDefinition... defs) {
         registry = TrTableRegistry.load(List.of(defs));
         service = new TrResolveService(mockRedisWith(t), keys, registry, scripts, engine, backfill,
-                mapper, Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC));
+                mapper, Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC), TrMetrics.noop());
     }
 
     private TrRedis mockRedisWith(StringRedisTemplate template) {
@@ -353,7 +354,7 @@ class TrResolveServiceBranchTest {
         d.setSelectorScript("file:/x.groovy");
         registry = TrTableRegistry.load(List.of(d));
         service = new TrResolveService(mockRedisWith(t), keys, registry, scripts, engine, backfill,
-                mapper, Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC));
+                mapper, Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC), TrMetrics.noop());
         seed("t1", "e1", "e2");
         TrCompiledScript selector = mock(TrCompiledScript.class);
         when(scripts.find("t1:selector")).thenReturn(Optional.of(selector));
@@ -368,7 +369,7 @@ class TrResolveServiceBranchTest {
         d.setSelectorScript("file:/x.groovy");
         registry = TrTableRegistry.load(List.of(d));
         service = new TrResolveService(mockRedisWith(t), keys, registry, scripts, engine, backfill,
-                mapper, Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC));
+                mapper, Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC), TrMetrics.noop());
         seed("t1", "e1");
         TrCompiledScript selector = mock(TrCompiledScript.class);
         when(scripts.find("t1:selector")).thenReturn(Optional.of(selector));
@@ -383,7 +384,7 @@ class TrResolveServiceBranchTest {
         d.setSelectorScript("file:/x.groovy");
         registry = TrTableRegistry.load(List.of(d));
         service = new TrResolveService(mockRedisWith(t), keys, registry, scripts, engine, backfill,
-                mapper, Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC));
+                mapper, Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC), TrMetrics.noop());
         seed("t1", "e1");
         TrCompiledScript selector = mock(TrCompiledScript.class);
         when(scripts.find("t1:selector")).thenReturn(Optional.of(selector));

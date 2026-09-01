@@ -4,6 +4,7 @@ import fun.commons.framework4j.redis.manager.MultiRedisManager;
 import fun.commons.tokenroute.config.TrProperties;
 import fun.commons.tokenroute.config.TrTableDefinition;
 import fun.commons.tokenroute.config.TrTableRegistry;
+import fun.commons.tokenroute.observe.TrMetrics;
 import fun.commons.tokenroute.keyspace.TrKeySpace;
 import fun.commons.tokenroute.redis.TrLua;
 import fun.commons.tokenroute.redis.TrRedis;
@@ -61,7 +62,7 @@ class TrEvaluateJobTest {
     }
 
     private TrEvaluateJob job() {
-        return new TrEvaluateJob(mockRedis(), keys, registry, manager, props(), fixedClock());
+        return new TrEvaluateJob(mockRedis(), keys, registry, manager, props(), fixedClock(), TrMetrics.noop());
     }
 
     private TrRedis mockRedis() {

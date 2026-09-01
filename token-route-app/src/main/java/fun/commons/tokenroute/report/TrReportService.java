@@ -37,15 +37,19 @@ public class TrReportService {
     private final TrKeySpace keys;
     private final TrTableRegistry registry;
     private final Clock clock;
+    private final fun.commons.tokenroute.observe.TrMetrics metrics;
 
-    public TrReportService(TrRedis redis, TrKeySpace keys, TrTableRegistry registry, Clock clock) {
+    public TrReportService(TrRedis redis, TrKeySpace keys, TrTableRegistry registry, Clock clock,
+                           fun.commons.tokenroute.observe.TrMetrics metrics) {
         this.redis = redis;
         this.keys = keys;
         this.registry = registry;
         this.clock = clock;
+        this.metrics = metrics;
     }
 
     public TrReportResponse report(TrReportRequest request) {
+        long start = clock.millis();
         if (request.getReports() == null || request.getReports().isEmpty()
                 || request.getReports().size() > TrReportRequest.MAX_BATCH) {
             throw new ApiException(TrCode.PARAM_ERROR.getCode(),
@@ -64,6 +68,7 @@ public class TrReportService {
             }
             response.setAccepted(response.getAccepted() + 1);
         }
+        metrics.report(start, response.getAccepted(), response.getRejected().size());
         return response;
     }
 

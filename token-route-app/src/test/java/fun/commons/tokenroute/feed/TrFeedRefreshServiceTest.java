@@ -2,6 +2,7 @@ package fun.commons.tokenroute.feed;
 
 import fun.commons.tokenroute.config.TrTableDefinition;
 import fun.commons.tokenroute.config.TrTableRegistry;
+import fun.commons.tokenroute.observe.TrMetrics;
 import fun.commons.tokenroute.keyspace.TrKeySpace;
 import fun.commons.tokenroute.redis.TrLua;
 import fun.commons.tokenroute.redis.TrRedis;
@@ -119,7 +120,7 @@ class TrFeedRefreshServiceTest {
         defs.add(table("t-refused", "http://127.0.0.1:" + refusedPort + "/x"));
         service = new TrFeedRefreshService(redis, new TrKeySpace("tr"),
                 TrTableRegistry.load(defs), new com.fasterxml.jackson.databind.ObjectMapper(),
-                Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC));
+                Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC), TrMetrics.noop());
     }
 
     private static TrTableDefinition table(String name, String url) {

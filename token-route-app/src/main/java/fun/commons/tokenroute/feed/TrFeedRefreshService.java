@@ -44,17 +44,20 @@ public class TrFeedRefreshService implements TrFeedBackfill {
     private final ObjectMapper mapper;
     private final Clock clock;
     private final HttpClient http;
+    private final fun.commons.tokenroute.observe.TrMetrics metrics;
     /** 本实例单飞互斥（多实例靠 pull 语义幂等 + Redis 游标龄判定收敛） */
     private final ConcurrentHashMap<String, Object> inFlight = new ConcurrentHashMap<>();
 
     public TrFeedRefreshService(TrRedis redis, TrKeySpace keys, TrTableRegistry registry,
-                                ObjectMapper mapper, Clock clock) {
+                                ObjectMapper mapper, Clock clock,
+                                fun.commons.tokenroute.observe.TrMetrics metrics) {
         this.redis = redis;
         this.keys = keys;
         this.registry = registry;
         this.mapper = mapper;
         this.clock = clock;
         this.http = HttpClient.newBuilder().connectTimeout(Duration.ofMillis(PULL_TIMEOUT_MS)).build();
+        this.metrics = metrics;
     }
 
     /** 拉取结果（refresh 接口回显） */
@@ -66,8 +69,14 @@ public class TrFeedRefreshService implements TrFeedBackfill {
         return pullNow(tableId).success();
     }
 
-    /** 冷启动/立即刷新：同步拉取（3s 超时） */
+    /** 冷启动/立即刷新：同步拉取（3s 超时）；结果计数（SLI#4） */
     public Result pullNow(String tableId) {
+        Result r = pullOnce(tableId);
+        metrics.feedPull(r.success());
+        return r;
+    }
+
+    private Result pullOnce(String tableId) {
         long start = clock.millis();
         var tableOpt = registry.find(tableId);
         if (tableOpt.isEmpty()) {

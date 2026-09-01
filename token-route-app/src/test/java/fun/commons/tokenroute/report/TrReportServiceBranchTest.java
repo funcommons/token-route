@@ -2,6 +2,7 @@ package fun.commons.tokenroute.report;
 
 import fun.commons.framework4j.web.ApiException;
 import fun.commons.tokenroute.common.TrCode;
+import fun.commons.tokenroute.observe.TrMetrics;
 import fun.commons.tokenroute.config.TrTableDefinition;
 import fun.commons.tokenroute.config.TrTableRegistry;
 import fun.commons.tokenroute.keyspace.TrKeySpace;
@@ -65,7 +66,7 @@ class TrReportServiceBranchTest {
         doReturn(List.of("OK", ""))
                 .when(t).execute(same(TrLua.REPORT_AGGREGATE), anyList(), any(Object[].class));
         service = new TrReportService(redis, keys, TrTableRegistry.load(List.of(d1, d2)),
-                Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC));
+                Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC), TrMetrics.noop());
     }
 
     private static TrReportRequest.Item item(String entryId, String leaseId, String result, Double units) {

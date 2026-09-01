@@ -1,0 +1,6 @@
+{"entries": [
+  {"name": "up-a", "weight": 100, "order_no": 1, "status": "ACTIVE",
+   "data_json": {"base_url": "https://up-a.example.com", "capacity": {"max_concurrency": 20}}},
+  {"name": "up-b", "weight": 50, "order_no": 2, "status": "ACTIVE",
+   "data_json": {"base_url": "https://up-b.example.com"}}
+]}

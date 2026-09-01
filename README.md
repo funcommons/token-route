@@ -28,6 +28,7 @@
 
 | 文档 | 说明 |
 |---|---|
+| [开发原则.md](./docs/开发文档/开发原则.md) | **后端开发纪律**：fwk4j 优先不重复建设 / 四方对齐 DoD / copy benefit4j 改造不从 0 开始 |
 | [核心业务流程.md](./docs/开发文档/核心业务流程.md) | **图集入口**：总体架构图 / 两大核心流程图 / 状态机 / 关键时序图 |
 | [01_设计方案.md](./docs/开发文档/01_设计方案.md) | 设计方案（定位 / 能力边界 / 领域模型 / 关键机制 / API / 分期） |
 | [02_接口契约.md](./docs/开发文档/02_接口契约.md) | 两面全接口契约（鉴权三模式 / 错误码 / resolve 预占 / report 三态 / FEED 数据契约） |
@@ -50,12 +51,37 @@
 
 ## 当前状态
 
-**P0 设计阶段**（立项未启动）——设计方案 V2.1 定稿（V2.0 核心流程重定义 + 评审收口）：
-**[docs/开发文档/01_设计方案.md](./docs/开发文档/01_设计方案.md)**
+**P1 编码完成（S0~S7 全部出口闸门通过）**——进度锚点见 [CODING-PROGRESS.md](./CODING-PROGRESS.md)：
 
-- **P1 立项触发**：token-gateway 任务面（M2.5）启动，出现第二消费方
-- **P1 范围**：token-route 服务（Java 17 · Spring Boot · 端口 9302）+ token-route-sdk 薄件（HTTP 客户端 + report 批量器，自 token-gateway `ThmpContractClient` 平移）
-- **P2 增强**：THMP S3 健康状态机以 feed 收敛、ops 只读管理台页面
+- **S0~S7 全链落地**：骨架/脚本沙箱/resolve 预占/report 三态记账/评估器/FEED 拉取/ops 只读面/OpenAPI 导出/SDK 薄件/全链冒烟 ×2 连跑全绿
+- **测试规模**：单测 96 + IT 30（Testcontainers Redis）全绿；冒烟 8 组 ×2
+- **待办（P2）**：report 批量 pipeline 优化、ops /metrics 暴露、channel-legacy state_policy 预设、生产 Redisson 锁配置
+
+## 构建与运行
+
+```bash
+# 单测（无 Docker 依赖）
+mvn test
+
+# 集成测试（需 Docker；Testcontainers + Redis 容器）
+mvn test -Dtr.it=true -Dtest='TrRedisLuaIT,TrResolveFlowIT,TrReportFlowIT,TrFeedEvalIT,TrOpsFlowIT'
+
+# 本地起服务（app:9302 + redis + mock FEED 上游）
+docker compose up -d --build
+
+# 冒烟：S0 三项 / S7 全链 8 组（建议 ×2 连跑）
+bash scripts/smoke-s0.sh
+bash scripts/smoke.sh 1 && bash scripts/smoke.sh 2
+
+# SDK 消费方坐标
+<dependency>
+  <groupId>fun.commons</groupId>
+  <artifactId>token-route-sdk</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+</dependency>
+```
+
+> 网络受限环境：Docker 镜像源与 jitpack 说明见 `CODING-PROGRESS.md` 环境节；Dockerfile 基础镜像走 ARG 可覆盖。
 
 ## funcommons 仓族
 

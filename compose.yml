@@ -1,0 +1,33 @@
+services:
+  redis:
+    image: ${REDIS_IMAGE:-docker.m.daocloud.io/library/redis:7-alpine}
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]  # AOF everysec（03 §1 建议）
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # mock FEED 上游（S7 全链冒烟：refresh_url 真源；挂载文件可改写模拟上游数据变更）
+  mock-feed:
+    image: ${PYTHON_IMAGE:-dockerproxy.net/library/python:3-alpine}
+    working_dir: /srv
+    volumes:
+      - ./scripts/mock-feed.json:/srv/feed.json
+      - ./scripts/serve.py:/srv/serve.py
+    command: ["python", "serve.py"]
+
+  app:
+    build: .
+    ports:
+      - "9302:9302"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      TR_API_KEY: ${TR_API_KEY:-dev-api-key}
+      JWT_SECRET: ${JWT_SECRET:-tr-dev-secret-key-please-rotate-32ch}
+    depends_on:
+      redis:
+        condition: service_healthy
+      mock-feed:
+        condition: service_started

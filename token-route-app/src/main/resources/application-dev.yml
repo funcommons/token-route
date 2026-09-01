@@ -1,0 +1,6 @@
+# dev 种子：compose 冒烟用路由表（refresh_url 指向 mock-feed 服务）
+tr:
+  tables:
+    - name: llm
+      refresh_url: http://mock-feed:8000/feed
+      strategy_type: WEIGHTED_RANDOM

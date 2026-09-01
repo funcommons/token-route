@@ -1,0 +1,55 @@
+server:
+  port: 9302
+  shutdown: graceful                # 优雅停机: SIGTERM 后处理完在途请求再退出
+
+spring:
+  application:
+    name: token-route
+  profiles:
+    active: dev
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+# fwk4j MultiRedis（datasource default；token-route 仅 Redis，无 PG）
+framework4j:
+  redis:
+    enabled: true
+    datasources:
+      main:
+        timeout: 3s
+        host: ${REDIS_HOST:localhost}
+        port: ${REDIS_PORT:6379}
+        lettuce:
+          pool:
+            max-active: 50
+            max-idle: 20
+            min-idle: 5
+  # jwt 鉴权模式（只验不签；mode=none/apikey 时仅装配不生效于拦截）
+  access-token:
+    enabled: true
+    redis-name: main
+    secret-key: ${JWT_SECRET:tr-dev-secret-key-please-rotate-32ch}
+    hash-salt: ${JWT_SALT:tr-salt}
+    exclude-path-patterns: ["/v3/api-docs/**", "/swagger-ui/**"]
+    policies:
+      tr-client:
+        key: [tenant_id]
+        expire-time: 7200
+      tr-admin:
+        key: [tenant_id]
+        expire-time: 7200
+
+tr:
+  key-prefix: tr                    # Redis 键前缀（03_数据设计 §1）
+  redis-name: main                  # fwk4j MultiRedis datasource 名
+  scheduler:
+    enabled: true                   # 评估器/FEED 惰性调度（CI 无 Docker 切 false）
+  auth:
+    contract-mode: none             # 契约面鉴权三模式 none/apikey/jwt（02_接口契约 §3）
+    ops-mode: jwt                   # ops 面默认 jwt（policy tr-admin）；生产保持 jwt
+    api-key: ${TR_API_KEY:dev-api-key}
+  tables: []                        # 路由表 config 种子（01 §4.1；dev 种子见 application-dev.yml）
+#  tables:
+#    - name: llm-supply
+#      refresh_url: http://up-a.example.com/feed
+#      strategy_type: WEIGHTED_RANDOM

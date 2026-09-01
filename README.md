@@ -1,5 +1,7 @@
 # token-route
 
+[![ci](https://github.com/funcommons/token-route/actions/workflows/ci.yml/badge.svg)](https://github.com/funcommons/token-route/actions/workflows/ci.yml)
+
 > 通用 API 路由服务 —— 路由决议 + 条目容量治理（上游限速/限并发），**只做决议与记账，不代理流量、不做用户限流**。
 
 ## 这是什么

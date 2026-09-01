@@ -177,6 +177,24 @@
 - 提交通道坑：api.github.com 匿名限流（共享 IP）→ 用 git credential fill 的存储凭据认证；
   PowerShell 5.1 需显式 TLS1.2，Get-Content -Raw 在该链路会返回 PSObject 需改 ReadAllText。
 
+## S11 token-gateway 接入材料 + ⑤.1/⑤.2 技术债（✅）
+
+- **② 接入材料**：`docs/用户文档/token-gateway接入指引.md`（gateway 视角一页纸：三步接入/红线/10700 补发/
+  鉴权选型/可观测对接）；`examples/gateway-demo/` 最小消费方工程（SDK 闭环 resolve→report→亲和 HIT→
+  batcher→detach），**对 compose 栈实跑 DEMO OK**（断言失败非零退出，可当联调冒烟）。
+- **⑤.1 /metrics**：actuator + micrometer-registry-prometheus；`observe/TrMetrics`（resolve outcome/P99、
+  report 受理/拒收/P99、FEED ok/fail、状态迁移 tag、script_degraded gauge——SLI#1~5/7；
+  `TrRedisHealthIndicator` SLI#8；#6 租约回收待 L6 接线后提供，#9 探活已有）。
+  SLI 文档新增「§指标对照」；测试 `TrMetricsTest` + noop 模式；实测 smoke 后计数真实增长。
+- **⑤.2 Redisson 锁**：`framework4j.redis.datasources.<ds>.redisson.enabled=true` 使能
+  （yml 注释块 + 配置手册 §7/§8 更新）；`TrRedissonLockIT`（Testcontainers + @DynamicPropertySource）
+  验证使能链路与跨线程 tryLock(0) 互斥。
+- 坑账本：
+  - **Boot 健康组件命名冲突**：`XxxHealthIndicator` bean 会被 actuator 以推断键 `xxx` 占位，
+    与业务 bean `trRedis` 撞 BeanDefinitionOverrideException → TrConfig 显式 @Bean 命名 `tokenRouteRedisHealth`。
+  - 剩余 P2：report pipeline、channel-legacy 预设、Loki 接入（纯接线）。
+- 全量门槛：BUILD SUCCESS；**app 单测 222 + sdk 9 + IT 36**；覆盖率分支 82.4% / 行 92.8%。
+
 ## P1 收尾状态（全部出口闸门通过）
 
 - 全模块 `mvn test`：**app 216 + sdk 9 = 225 绿**；IT（Testcontainers，failsafe）：**34 绿**；冒烟 8 组 ×2 全绿。
@@ -204,3 +222,4 @@
 | S8 | ~1000（9 测试类 + pom 门槛 + 2 处主代码修复 + 文档） | 8 轮（Mockito varargs / isMember 重载 / deep-stub 泛型 / 降级快照位置 / fwk4j policy 语义 / Lua 参数下标） |
 | S9 | ~60（ci.yml + README 徽章 + 本节） | 首轮即成；首跑 full-gate success（daocloud 可达性验证通过） |
 | S10 | ~90（issue ×2 + pom 注释纠正 + LTRIM 自修 + 本节） | 5 轮（S0-b 误诊翻案 / 复现工程 jitpack 仓库 / PS TLS1.2 / Get-Content 对象化 / JSON 转义弃 sed 改 ConvertTo-Json） |
+| S11 | ~1100（指引 + demo 工程 + metrics/redisson 实现 + 测试 + 文档） | 6 轮（健康组件命名冲突 / 增量编译残留 / mockito varargs 回归 / 跨行 sed 失配 / strongReference 签名 / IT 容器属性注入） |

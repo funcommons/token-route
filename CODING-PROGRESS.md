@@ -157,8 +157,8 @@
 - `.github/workflows/ci.yml`：PR → `mvn test`（无 Docker 快速反馈，15min 超时）；
   push main → `mvn verify -Dtr.it=true` 完整门槛（单测 + Testcontainers IT + JaCoCo 闸门，30min 超时），
   覆盖率报告上传 artifact。concurrency 按.ref 取消被超 run；m2 缓存按 pom 哈希。
-- 已知风险：IT 镜像走 `docker.m.daocloud.io`（本地 docker.io 不可达的权宜）——GitHub runner 对
-  daocloud 一般可达；若首跑红在此处，把 IT 的镜像引用改为可配置（docker.io 官方源在 runner 上直连可用）。
+- 已知风险（已消除）：IT 镜像走 `docker.m.daocloud.io`——首次 gate 运行（42b94b7，
+  full-gate 作业 ~3min）**success**，runner 上 daocloud 可达，Testcontainers IT + JaCoCo 闸门全过。
 - README 加 workflow 徽章。
 
 ## P1 收尾状态（全部出口闸门通过）
@@ -184,4 +184,4 @@
 | S6 | ~420（含测试） | 3 轮（模块登记 / 泛型重载 / ReportResult 形状） |
 | S7 | ~260 | 3 轮（mock 镜像源 / 跨轮状态 / lettuce 超时） |
 | S8 | ~1000（9 测试类 + pom 门槛 + 2 处主代码修复 + 文档） | 8 轮（Mockito varargs / isMember 重载 / deep-stub 泛型 / 降级快照位置 / fwk4j policy 语义 / Lua 参数下标） |
-| S9 | ~60（ci.yml + README 徽章 + 本节） | 首轮即成（待首跑验证 daocloud 镜像可达性） |
+| S9 | ~60（ci.yml + README 徽章 + 本节） | 首轮即成；首跑 full-gate success（daocloud 可达性验证通过） |

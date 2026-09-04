@@ -1,0 +1,30 @@
+# 嵌入式最小宿主配置（03_嵌入式SDK接入指南 §2/§3）：
+# 引 token-route-starter → 表种子随宿主配置 → MultiRedis 经 fwk4j 装配
+# 注意：表字段为扁平绑定（refresh-url / affinity-enabled，见 TrTableDefinition 与配置手册 §3 字段表）
+spring:
+  application:
+    name: embedded-demo
+
+framework4j:
+  redis:
+    enabled: true
+    datasources:
+      main:                       # 对应 tr.redis-name
+        host: ${REDIS_HOST:localhost}
+        port: ${REDIS_PORT:6379}
+        timeout: 3s
+        redisson:
+          enabled: ${TR_REDISSON_ENABLED:false}   # 多实例宿主开：评估器互斥
+
+tr:
+  key-prefix: tr
+  redis-name: main
+  scheduler:
+    enabled: true                 # 评估器（自管 daemon 线程；demo 数秒即退，不触轮次）
+  tables:                         # 表种子 schema 与独立服务一致（配置手册 §3）
+    - name: llm
+      strategy-type: WEIGHTED_RANDOM
+      affinity-enabled: true
+      affinity-idle-timeout-seconds: 28800
+      refresh-url: ${TR_FEED_URL:http://mock-feed:8000/feed}
+      refresh-interval-seconds: 60

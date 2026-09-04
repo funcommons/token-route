@@ -227,6 +227,8 @@
 - **TrRouteEngine 门面**：resolve/report/detach 进程内直调；**评估器改自管 daemon 线程**（`TrEvaluatorScheduler` fixedDelay 60s，不 @EnableScheduling——不动宿主调度语义）。
 - **补齐 TR-CTR-003 detach**（契约/OpenAPI/SDK 已有而实现缺失）：内核 `TrRouteEngine.detach`（DEL + DETACH 事件 by=CONSUMER，幂等）+ app `POST /v1/affinity/detach`（10400/10100 校验）。
 - **测试**：新增 TrStarterAutoConfigurationTest 4（装配矩阵/总开关/评估器开关/坏种子 fail-fast）+ TrRouteEngineTest 6（委托/detach 内核/幂等）+ TrDetachControllerTest 3 + TrDetachIT 1（真实 Redis 建绑→HIT→detach→重绑 NEW 闭环）→ 单测 starter 189 + app 44 + sdk 9 = **242 绿**；IT starter 42 + app 2 = **44 绿**；`mvn verify -Dtr.it=true` 四模块 jacoco 门槛全过。
+- **嵌入式最小宿主示例 `examples/embedded-demo`**（starter 落地基准）：Boot parent + 启动类排除链 + fwk4j datasource + 扁平表种子三件套；DemoRunner 五步闭环（resolve NEW → admin 注入直查 → report → HIT → detach 重绑）实跑通过（真实 Redis + mock FEED，`DEMO OK`）；compose `--profile demo` 一条命令可跑（构建上下文=仓库根，Dockerfile 多阶段装 starter 后打 fat jar）。宿主踩坑两条已沉淀进指南 §2：**Boot BOM 锁版**（裸引 → netty `NoClassDefFoundError: SocketProtocolFamily`）与表字段**扁平绑定**。
+- **顺手修复（S14 重构遗留 + 文档勘误）**：①根 Dockerfile 未纳入 starter 模块（app 镜像构建已断）——补 starter pom/src 拷贝；②配置手册 §3 表字段样例为 nested 写法（`affinity.*`/`feed.*`）**实际不参与绑定**（TrTableDefinition 为扁平字段，embedded-demo fail-fast 实锤）——手册/指南/示例统一改扁平并加勘误注记。
 - 文档：**新增 `docs/用户文档/03_嵌入式SDK接入指南.md`**（对比表/宿主前置排除链/配置/门面用法/管理注入/混布语义/纪律速查）；01 V2.3（§7.2 嵌入式行 + 修订史）；README 双坐标；配置手册 tr.enabled；接入手册 §6 指路；CI artifact 补 starter。
 
 ## P1 收尾状态（全部出口闸门通过）

@@ -49,3 +49,20 @@ services:
         condition: service_healthy
       mock-feed:
         condition: service_started
+
+  # 嵌入式最小宿主示例（docs/用户文档/03_嵌入式SDK接入指南.md）：
+  # docker compose run --rm embedded-demo（--profile demo 激活；starter 进程内直调闭环）
+  embedded-demo:
+    build:
+      context: .
+      dockerfile: examples/embedded-demo/Dockerfile
+    profiles: ["demo"]
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      TR_FEED_URL: http://mock-feed:8000/feed
+    depends_on:
+      redis:
+        condition: service_healthy
+      mock-feed:
+        condition: service_started

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- Boot parent：版本管理（netty/lettuce 等传递依赖需 BOM 锁版——宿主不加 parent 时
+       至少以 dependencyManagement 引 spring-boot-dependencies，见 03 指南 §2） -->
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.5.4</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>fun.commons</groupId>
+  <artifactId>embedded-demo</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <description>token-route 嵌入式核心最小宿主示例（token-route-starter 自动装配 + TrRouteEngine 进程内直调闭环）</description>
+
+  <properties>
+    <java.version>17</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <repositories>
+    <repository><id>jitpack</id><url>https://jitpack.io</url></repository>
+    <repository><id>aliyun</id><url>https://maven.aliyun.com/repository/public</url></repository>
+    <repository><id>central</id><url>https://repo.maven.apache.org/maven2</url></repository>
+  </repositories>
+
+  <dependencies>
+    <!-- 嵌入式核心（本示例的全部意义所在）：引依赖即自动装配引擎 -->
+    <dependency>
+      <groupId>fun.commons</groupId>
+      <artifactId>token-route-starter</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+    </dependency>
+    <!-- 宿主自身的 Boot 基座（无 web——最小宿主） -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

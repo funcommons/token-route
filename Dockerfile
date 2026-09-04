@@ -7,10 +7,12 @@ ARG JRE_IMAGE=docker.m.daocloud.io/library/eclipse-temurin:17-jre
 FROM ${MAVEN_IMAGE} AS build
 WORKDIR /build
 COPY pom.xml .
+COPY token-route-starter/pom.xml token-route-starter/pom.xml
 COPY token-route-app/pom.xml token-route-app/pom.xml
 COPY token-route-sdk/pom.xml token-route-sdk/pom.xml
 # 依赖预取（jitpack/aliyun 失败不阻塞构建，后续 package 再补拉）
 RUN mvn -q -pl token-route-app -am dependency:go-offline || true
+COPY token-route-starter/src token-route-starter/src
 COPY token-route-app/src token-route-app/src
 COPY token-route-sdk/src token-route-sdk/src
 RUN mvn -q -pl token-route-app -am package -DskipTests

@@ -67,7 +67,8 @@ framework4j:
 public class HostApplication { }
 ```
 
-3. 宿主若自行启用 fwk4j-web 全局异常处理,须自备 `spring-jdbc`(上游已知问题 funcommons/framework4j#19)。
+3. **Boot 依赖管理**:宿主用 `spring-boot-starter-parent` 或 `dependencyManagement` 引 `spring-boot-dependencies` BOM——netty/lettuce 等传递依赖需 BOM 锁版,裸引会出现 `NoClassDefFoundError: SocketProtocolFamily` 类版本错配;
+4. 宿主若自行启用 fwk4j-web 全局异常处理,须自备 `spring-jdbc`(上游已知问题 funcommons/framework4j#19)。
 
 ## 3. 配置(随宿主 application.yml)
 
@@ -80,15 +81,13 @@ tr:
     enabled: true                # 评估器(状态机每分钟驱动;自管 daemon 线程,不动宿主 @EnableScheduling 语义)
   engine:
     script-timeout-ms: 100       # 脚本执行超时
-  tables:                        # 表种子——schema 与独立服务完全一致(配置手册 §3)
+  tables:                        # 表种子——字段为扁平绑定(配置手册 §3 字段表)
     - name: llm-supply
       strategy-type: WEIGHTED_RANDOM
-      affinity:
-        enabled: true
-        idle-timeout-seconds: 28800
-      feed:
-        refresh-url: http://supply-system:9100/v1/routes/llm-channels
-        interval-seconds: 60
+      affinity-enabled: true
+      affinity-idle-timeout-seconds: 28800
+      refresh-url: http://supply-system:9100/v1/routes/llm-channels
+      refresh-interval-seconds: 60
 ```
 
 - **表种子是宿主配置的一部分**:换表/调参 = 改宿主配置 + 滚动重启宿主(与独立服务的纪律一致);坏种子**启动即失败**(fail-fast,10633 指名表);
@@ -118,9 +117,14 @@ public class RoutingService {
         // ... http 调用 ...
 
         // ③ 回填三态(进程内直调;高频路径可自建批量缓冲,纪律同接入手册 §2.2/§4.2)
+        TrReportRequest.Item item = new TrReportRequest.Item();
+        item.setEntryId(r.getEntryId());
+        item.setLeaseId(r.getLeaseId());
+        item.setResult("SUCCESS");
+        item.setRateUnits(1.0);
+        item.setSessionId(taskId);
         TrReportRequest report = new TrReportRequest();
-        report.getReports().add(new TrReportRequest.Item(
-                r.getEntryId(), r.getLeaseId(), "SUCCESS", 1, null, taskId));
+        report.setReports(java.util.List.of(item));
         engine.report(report);
 
         // ④ 会话终态(亲和表建议):立即换条目也是这个组合(detach → resolve)

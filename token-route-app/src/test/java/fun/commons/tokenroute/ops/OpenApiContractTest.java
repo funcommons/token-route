@@ -36,13 +36,14 @@ class OpenApiContractTest {
     void frozenV1PathsAreAllDeclared() {
         Map<String, Object> doc = load();
         Map<String, Object> paths = (Map<String, Object>) doc.get("paths");
-        // 契约面 4 + ops 4 + 亲和管理 4（issue #1，零管理写面唯一例外）；URL 版本段冻结 /v1，响应只加不减（02 §9）
+        // 契约面 4 + ops 4 + 内部管理 5（亲和管理 4 + 状态重置 1，issue #1，零管理写面唯一例外）；
+        // URL 版本段冻结 /v1，响应只加不减（02 §9）
         assertThat(paths.keySet()).containsExactlyInAnyOrder(
                 "/v1/ping", "/v1/resolve", "/v1/report", "/v1/affinity/detach", "/v1/refresh/{tid}",
                 "/v1/ops/tables/{tid}/status", "/v1/ops/resolve-logs", "/v1/ops/affinity-events",
                 "/v1/ops/state-logs",
                 "/v1/admin/affinity/set", "/v1/admin/affinity/get",
-                "/v1/admin/affinity/list", "/v1/admin/affinity/delete");
+                "/v1/admin/affinity/list", "/v1/admin/affinity/delete", "/v1/admin/state/reset");
     }
 
     @Test

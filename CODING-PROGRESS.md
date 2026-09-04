@@ -208,15 +208,16 @@
   演练）/回滚（镜像回退 + FEED 自愈语义）。
 - 全量门槛复验 BUILD SUCCESS（IT 36 + sdk 9；覆盖率分支 82.4% / 行 92.8%）；smoke run2 全绿。
 
-## S13 亲和管理端点（✅ issue #1，零管理写面唯一例外）
+## S13 内部管理端点（✅ issue #1，零管理写面唯一例外）
 
-- **动因**：MMagiX 平台 pin 功能下线（14 号方案 V2.1 决策点③变更），运营手动切流改由「改亲和值」承接——原「pin 一等公民」需求撤销（issue 编辑历史存档），改提亲和管理接口。
-- **端点**（`/v1/admin/affinity/**`，TR-ADM-001~004，02 §7.1）：set（upsert 指向 + ttl 缺省表级空闲超时/1~604800s，entry 存在性校验 miss 回源一次再核 → 10400）/ get（指向 + 剩余 TTL）/ list（session 前缀 SCAN，≤500 条按 session 排序，超限 `complete=false`）/ delete（幂等）。**复用既有亲和键，不动 resolve 流程 / 不动 FEED / 不新增键族 Lua**——改流闭环 IT 验证（admin set → resolve 亲和 HIT 新指向；delete → resolve 重绑 NEW）。
-- **内部鉴权**（`TrAffinityAdminInterceptor`，02 §3.3）：`X-Internal-Service-Token` 恒时比对（`MessageDigest.isEqual`）+ `trusted-ips` 白名单；**令牌未配置 = 端点整体禁用（全部 401，安全缺省）**；401/403 + 统一信封；与三模式拦截器互斥注册（TrAuthInterceptor exclude `/v1/admin/**`）。
-- **审计与事件**：`[TR-AFFINITY-ADMIN]` 单行结构化（op/table/session/entry/ttl/prev/by=来源 IP）+ 亲和事件 ring by=`ADMIN_SET`/`ADMIN_DELETE`（TR-OPS-003 可查，LTRIM 1000 + TTL 7d 同 resolve 侧规格）。
+- **动因**：MMagiX 平台 pin 功能下线（14 号方案 V2.1 决策点③变更），运营手动切流改由「改亲和值」承接——原「pin 一等公民」需求撤销（issue 编辑历史存档），改提亲和管理接口；追加状态重置（余额不足停用 → 充值后手动立即恢复）。
+- **亲和管理**（`/v1/admin/affinity/**`，TR-ADM-001~004，02 §7.1）：set（upsert 指向 + ttl 缺省表级空闲超时/1~604800s，entry 存在性校验 miss 回源一次再核 → 10400）/ get（指向 + 剩余 TTL）/ list（session 前缀 SCAN，≤500 条按 session 排序，超限 `complete=false`）/ delete（幂等）。**复用既有亲和键，不动 resolve 流程 / 不动 FEED / 不新增键族**——改流闭环 IT 验证（admin set → resolve 亲和 HIT 新指向；delete → resolve 重绑 NEW）。
+- **状态重置**（`/v1/admin/state/reset`，TR-ADM-005）：条目从 FROZEN/降级态即时复位 ACTIVE——新增 L7 `state_reset.lua` 单往返原子：status→ACTIVE + `frozen_until`/`freeze_count`（退避升档从头计）+ **失败计数清 0**（连败 `tr:fail` DEL + 1m 窗 `tr:win` DEL，全新开始不带旧失败率）+ 迁移史 `ADMIN_RESET`；OFFLINE 拒绝（FEED 管理位）；已 ACTIVE 无残留幂等 `reset=false`；**复位后 report 三态照常驱动（无豁免）**。排水恢复闭环 IT：FROZEN → resolve EMPTY(ALL_FILTERED) → reset → resolve 恢复供给。
+- **内部鉴权**（`TrAffinityAdminInterceptor`，02 §3.3）：`X-Internal-Service-Token` 恒时比对（`MessageDigest.isEqual`）+ `trusted-ips` 白名单，覆盖 `/v1/admin/**`；**令牌未配置 = 端点整体禁用（全部 401，安全缺省）**；401/403 + 统一信封；与三模式拦截器互斥注册（TrAuthInterceptor exclude `/v1/admin/**`）。
+- **审计与事件**：`[TR-AFFINITY-ADMIN]`（op/table/session/entry/ttl/prev/by=来源 IP）+ `[TR-STATE-ADMIN]`（op=reset from/by）+ 亲和事件 ring by=`ADMIN_SET`/`ADMIN_DELETE`（TR-OPS-003）+ 状态迁移史 reason=`ADMIN_RESET`（TR-OPS-004）。
 - **顺手修复（契约对齐）**：`TrOpsController` 查询参数未显式命名——`@RequestParam String tableId` 按 `-parameters` 绑定驼峰名，与 02/OpenAPI 冻结的 snake_case（`table_id`/`entry_id`）不符，TR-OPS-002~004 实际调不通（smoke 只覆盖路径参数端点故未暴露）；admin 控制器出生即显式命名，ops 同修。
-- **测试**：单测 +29（服务 17：set/TTL/get/list 前缀/delete/事件/校验拒绝 + 拦截器 6 + MockMvc 鉴权矩阵 5 + 安全缺省 1）→ app 213 绿；IT `TrAffinityAdminIT` 5/5（含改流闭环）→ IT 41 绿无回退；OpenAPI 契约 4 端点同步 + 路径冻结断言更新。
-- 文档四方对齐：01 V2.2（§3.1 边界例外/§6.1 三面/§6.2 TR-ADM）/ 02 V2.2（§3.3 + §7.1 八要素）/ 配置手册（affinity-admin 两项 + env）/ 本节。
+- **测试**：单测 +37（亲和服务 17 + 状态服务 7 + 拦截器 6 + MockMvc 鉴权矩阵 5 + 安全缺省 1 + OpenApiContract 路径断言更新）→ app 221 绿；IT +7（TrAffinityAdminIT 5 + TrStateAdminIT 2，含改流/排水恢复闭环）→ IT 43 绿无回退；OpenAPI 契约 5 端点同步。
+- 文档四方对齐：01 V2.2（§3.1 边界例外/§6.1 三面/§6.2 TR-ADM-001~005）/ 02 V2.2（§3.3 + §7.1 八要素）/ 配置手册（affinity-admin 两项 + env）/ 本节。
 
 ## P1 收尾状态（全部出口闸门通过）
 

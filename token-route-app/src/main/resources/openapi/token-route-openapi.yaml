@@ -212,6 +212,25 @@ paths:
       responses:
         "200":
           description: "{deleted: true|false, entry_id}"
+  /v1/admin/state/reset:
+    post:
+      operationId: adminStateReset
+      tags: [admin]
+      summary: 状态重置（条目即时复位 ACTIVE——余额不足停用 → 充值后手动立即恢复）
+      description: 内部鉴权同亲和管理（X-Internal-Service-Token + trusted-ips）；原子清 frozen_until/freeze_count/连败/1m 窗 + 迁移史 ADMIN_RESET；OFFLINE 拒绝（FEED 管理位）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [table_id, entry_id]
+              properties:
+                table_id: { type: string }
+                entry_id: { type: string }
+      responses:
+        "200":
+          description: "{entry_id, previous_status, reset: true|false}；OFFLINE 10100 / 未知 10400"
 components:
   schemas:
     ApiResponse:

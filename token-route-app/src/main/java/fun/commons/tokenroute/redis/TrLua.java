@@ -33,6 +33,9 @@ public final class TrLua {
     /** L5 entry_upsert → {added, updated, removed} */
     public static final RedisScript<List> ENTRY_UPSERT = load("/lua/entry_upsert.lua");
 
+    /** L7 state_reset → {'RESET', from} | {'NOOP','ACTIVE'} | {'SKIP', NO_ENTRY|OFFLINE|BAD_JSON} */
+    public static final RedisScript<List> STATE_RESET = load("/lua/state_reset.lua");
+
     private TrLua() {
     }
 

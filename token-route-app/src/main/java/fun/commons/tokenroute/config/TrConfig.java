@@ -92,9 +92,19 @@ public class TrConfig implements WebMvcConfigurer {
         return new TrAuthInterceptor(authProperties, accessTokenProperties, jwtStrategy);
     }
 
+    /** 亲和管理端点内部鉴权（零管理写面唯一例外，issue #1）：不走两面三模式 */
+    @Bean
+    public fun.commons.tokenroute.auth.TrAffinityAdminInterceptor trAffinityAdminInterceptor() {
+        return new fun.commons.tokenroute.auth.TrAffinityAdminInterceptor(authProperties);
+    }
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // 契约面与 ops 面共用一个拦截器，内部按 /v1/ops/ 前缀取各自模式
-        registry.addInterceptor(trAuthInterceptor()).addPathPatterns("/v1/**");
+        // 契约面与 ops 面共用一个拦截器，内部按 /v1/ops/ 前缀取各自模式；
+        // /v1/admin/** 走亲和管理内部鉴权（令牌 + 可信 IP），与三模式互斥
+        registry.addInterceptor(trAuthInterceptor())
+                .addPathPatterns("/v1/**")
+                .excludePathPatterns("/v1/admin/**");
+        registry.addInterceptor(trAffinityAdminInterceptor()).addPathPatterns("/v1/admin/**");
     }
 }

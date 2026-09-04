@@ -150,6 +150,68 @@ paths:
       responses:
         "200":
           description: 迁移史数组
+  /v1/admin/affinity/set:
+    post:
+      operationId: adminAffinitySet
+      tags: [admin]
+      summary: 亲和管理 set（upsert 指向；改流 = 下一 resolve 亲和命中新指向）
+      description: 内部鉴权 X-Internal-Service-Token + trusted-ips（02 §3.3）；「零管理写面」唯一例外
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [table_id, session_id, entry_id]
+              properties:
+                table_id: { type: string }
+                session_id: { type: string, maxLength: 128 }
+                entry_id: { type: string }
+                ttl_seconds: { type: integer, minimum: 1, maximum: 604800 }
+      responses:
+        "200":
+          description: "{session_id, entry_id, ttl_seconds, previous_entry_id}；未知表/条目 10400"
+  /v1/admin/affinity/get:
+    get:
+      operationId: adminAffinityGet
+      tags: [admin]
+      summary: 亲和管理 get（当前指向 + 剩余 TTL）
+      parameters:
+        - { name: table_id, in: query, required: true, schema: { type: string } }
+        - { name: session_id, in: query, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: "{found, entry_id?, ttl_remaining_seconds?}"
+  /v1/admin/affinity/list:
+    get:
+      operationId: adminAffinityList
+      tags: [admin]
+      summary: 亲和管理 list（session_id 前缀 SCAN，低频排查；无序，超限 complete=false）
+      parameters:
+        - { name: table_id, in: query, required: true, schema: { type: string } }
+        - { name: session_id_prefix, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 100, maximum: 500 } }
+      responses:
+        "200":
+          description: "{table_id, prefix, count, complete, items:[{session_id, entry_id, ttl_remaining_seconds}]}"
+  /v1/admin/affinity/delete:
+    post:
+      operationId: adminAffinityDelete
+      tags: [admin]
+      summary: 亲和管理 delete（幂等，无绑定返回 deleted=false）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [table_id, session_id]
+              properties:
+                table_id: { type: string }
+                session_id: { type: string, maxLength: 128 }
+      responses:
+        "200":
+          description: "{deleted: true|false, entry_id}"
 components:
   schemas:
     ApiResponse:
@@ -168,3 +230,4 @@ components:
 tags:
   - name: contract
   - name: ops
+  - name: admin

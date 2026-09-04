@@ -37,7 +37,7 @@ public class TrOpsController {
     /** TR-OPS-002：决议日志（ring 热窗 7d） */
     @GetMapping("/v1/ops/resolve-logs")
     public ApiResponse<List<Object>> resolveLogs(
-            @RequestParam String tableId,
+            @RequestParam("table_id") String tableId,
             @RequestParam(required = false) Long from,
             @RequestParam(required = false) Long to,
             @RequestParam(required = false) String result,
@@ -49,7 +49,7 @@ public class TrOpsController {
     /** TR-OPS-003：亲和事件史（BIND|DETACH） */
     @GetMapping("/v1/ops/affinity-events")
     public ApiResponse<List<Object>> affinityEvents(
-            @RequestParam String tableId,
+            @RequestParam("table_id") String tableId,
             @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "100") int size) {
@@ -59,7 +59,7 @@ public class TrOpsController {
     /** TR-OPS-004：状态迁移史 */
     @GetMapping("/v1/ops/state-logs")
     public ApiResponse<List<Object>> stateLogs(
-            @RequestParam String entryId,
+            @RequestParam("entry_id") String entryId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "100") int size) {
         return ApiResponse.success(ops.stateLogs(entryId, page, Math.min(size, 1000)));

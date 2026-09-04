@@ -75,6 +75,17 @@ public class TrKeySpace {
         return key("affinity", tableId, sessionId);
     }
 
+    /** tr:affinity:{tid}:{prefix}* —— 亲和管理 list 的 SCAN MATCH 模式（前缀可空 = 全表亲和；02 §7.1） */
+    public String affinityScanPattern(String tableId, String sessionIdPrefix) {
+        return key("affinity", tableId) + ":" + (sessionIdPrefix == null ? "" : sessionIdPrefix) + "*";
+    }
+
+    /** 亲和键 → session_id（剥去 tr:affinity:{tid}: 前缀段；非亲和键原样返回，防御 SCAN 野键） */
+    public String sessionIdFromAffinityKey(String tableId, String affinityKey) {
+        String head = key("affinity", tableId) + ":";
+        return affinityKey.startsWith(head) ? affinityKey.substring(head.length()) : affinityKey;
+    }
+
     /** tr:win:{eid} ZSET 1m 滑动窗调用观测 */
     public String win(String entryId) {
         return key("win", entryId);

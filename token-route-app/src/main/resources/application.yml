@@ -63,6 +63,9 @@ tr:
     contract-mode: none             # 契约面鉴权三模式 none/apikey/jwt（02_接口契约 §3）
     ops-mode: jwt                   # ops 面默认 jwt（policy tr-admin）；生产保持 jwt
     api-key: ${TR_API_KEY:dev-api-key}
+    affinity-admin:                 # 亲和管理端点（/v1/admin/affinity/**，零管理写面唯一例外，issue #1）
+      internal-token: ${TR_AFFINITY_ADMIN_TOKEN:}  # 空 = 端点整体禁用（全部 401，安全缺省）
+      trusted-ips: []               # 空 = 不校验来源 IP；非空 = 仅名单内 IP 可访问
   tables: []                        # 路由表 config 种子（01 §4.1；dev 种子见 application-dev.yml）
 #  tables:
 #    - name: llm-supply

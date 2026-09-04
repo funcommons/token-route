@@ -75,11 +75,18 @@ docker compose up -d --build
 bash scripts/smoke-s0.sh
 bash scripts/smoke.sh 1 && bash scripts/smoke.sh 2
 
-# SDK 消费方坐标
+# SDK 消费方坐标（HTTP 客户端模式）
 <dependency>
   <groupId>fun.commons</groupId>
   <artifactId>token-route-sdk</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.1.0</version>
+</dependency>
+
+# 嵌入式核心模式（starter：引擎进宿主进程，零网络跳；见 docs/用户文档/03_嵌入式SDK接入指南.md）
+<dependency>
+  <groupId>fun.commons</groupId>
+  <artifactId>token-route-starter</artifactId>
+  <version>1.1.0</version>
 </dependency>
 ```
 

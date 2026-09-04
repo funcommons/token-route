@@ -9,7 +9,7 @@ import fun.commons.tokenroute.resolve.TrEntry;
 import fun.commons.tokenroute.resolve.TrRateUnit;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
-import org.springframework.stereotype.Service;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +21,6 @@ import java.util.Set;
  * 运维只读查询面（02_接口契约 §7，TR-OPS-001~004；无写操作）。
  * ring 热窗 7d / LPTRIM 1000；亲和活跃数用限定前缀 SCAN（仅 ops 低频路径，业务面无扫描，mc-cache 铁律不破）。
  */
-@Service
 public class TrOpsService {
 
     private final TrRedis redis;

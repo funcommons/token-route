@@ -10,8 +10,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+
 
 import java.time.Clock;
 import java.util.List;
@@ -22,7 +21,6 @@ import java.util.Set;
  * 多实例锁：Redisson tryLock(waitTime=0)（对齐 thmp SchedulerRunnerConfig 模板）；
  * Redisson 未配置时退化为本地语义（单实例部署；生产配置 Redisson 后自动升级多实例互斥）。
  */
-@Component
 public class TrEvaluateJob {
 
     private static final Logger log = LoggerFactory.getLogger(TrEvaluateJob.class);
@@ -50,7 +48,6 @@ public class TrEvaluateJob {
         this.metrics = metrics;
     }
 
-    @Scheduled(fixedDelay = 60_000, initialDelay = 60_000)
     public void evaluate() {
         long start = clock.millis();
         RedissonClient redisson = redisManager.getRedissonClient(redisName);

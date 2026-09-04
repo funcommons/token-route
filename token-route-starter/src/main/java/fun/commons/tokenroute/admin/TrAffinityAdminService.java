@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
-import org.springframework.stereotype.Service;
+
 
 import java.time.Clock;
 import java.time.Duration;
@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
  * 指向条目 FROZEN/L3 时照常 miss 重选（自愈）。不动 FEED 数据面 / 表结构 / 键族。
  * 全操作审计日志 [TR-AFFINITY-ADMIN] + 亲和事件 ring（by=ADMIN_*，ops TR-OPS-003 可查）。
  */
-@Service
 public class TrAffinityAdminService {
 
     private static final Logger audit = LoggerFactory.getLogger("TR-AFFINITY-ADMIN");

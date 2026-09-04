@@ -11,7 +11,7 @@ import fun.commons.tokenroute.resolve.TrEntry;
 import fun.commons.tokenroute.resolve.TrRateUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
+
 
 import java.time.Clock;
 import java.util.List;
@@ -23,7 +23,6 @@ import java.util.Set;
  * 未知 entry_id / 非法 lease → rejected 明细（10700）；聚合计数不幂等不去重。
  * 容量口径（窗口/单位桶）取自条目 data_json.capacity——与 resolve 预占同源。
  */
-@Service
 public class TrReportService {
 
     private static final Logger log = LoggerFactory.getLogger(TrReportService.class);

@@ -4,7 +4,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import org.springframework.stereotype.Component;
+
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * tr_report_total / tr_report_rejected_total / tr_report_latency_seconds /
  * tr_feed_pull_total{result} / tr_state_transition_total{to} / tr_script_degraded。
  */
-@Component
 public class TrMetrics {
 
     private static final TrMetrics NOOP = new TrMetrics(null);

@@ -9,62 +9,50 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>token-route-app</artifactId>
-    <name>token-route-app</name>
-    <description>token-route 服务本体（契约面 + ops 面 + 决议引擎）</description>
+    <artifactId>token-route-starter</artifactId>
+    <name>token-route-starter</name>
+    <description>token-route 嵌入式核心 SDK（starter）：路由引擎 + 亲和 + 状态机 + 容量治理，自动装配进宿主进程直调（零网络跳）；tr.tables 种子随宿主配置。不含 web/actuator/鉴权面。</description>
 
     <dependencies>
-        <!-- 嵌入式核心（路由引擎/亲和/状态机/容量治理 + 自动装配），HTTP 壳只保留控制器与鉴权 -->
-        <dependency>
-            <groupId>fun.commons</groupId>
-            <artifactId>token-route-starter</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <!-- fwk4j-web 对 starter-web 为 optional，应用显式引入 -->
+        <!-- Spring Boot 自动装配（@AutoConfiguration / properties / ObjectProvider） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>
-        <!-- fwk4j web：ApiResponse 信封 / ApiException / GlobalExceptionHandler -->
+        <!-- 请求 DTO @NotBlank 校验注解（api only，不拖 web） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <!-- fwk4j-web：ApiException / 错误码（仅异常类型，GlobalExceptionHandler 不在本库激活面内；
+             宿主若自行启用 fwk4j-web 全局异常处理须自备 spring-jdbc，见 funcommons/framework4j#19） -->
         <dependency>
             <groupId>com.github.funcommons.framework4j</groupId>
             <artifactId>framework4j-web</artifactId>
             <version>${framework4j.version}</version>
         </dependency>
-        <!-- fwk4j accesstoken：jwt 鉴权模式（只验不签，@RequiresToken / AccessTokenValidationStrategy） -->
-        <dependency>
-            <groupId>com.github.funcommons.framework4j</groupId>
-            <artifactId>framework4j-accesstoken</artifactId>
-            <version>${framework4j.version}</version>
-        </dependency>
-        <!-- fwk4j redis：MultiRedis（datasource main）；传递引入 redisson-spring-boot-starter，
-             Boot/Redisson 自带自动装配在启动类排除（thmp S0#7 教训） -->
+        <!-- fwk4j redis：MultiRedis（宿主提供 MultiRedisManager bean；传递 redisson-spring-boot-starter，
+             其 Boot/Redisson 自动装配由宿主按需排除——族内惯例，见 app TrRouteApplication 排除链） -->
         <dependency>
             <groupId>com.github.funcommons.framework4j</groupId>
             <artifactId>framework4j-redis</artifactId>
             <version>${framework4j.version}</version>
         </dependency>
-
+        <!-- FEED 拉取 / 事件 JSON -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
         </dependency>
-        <!-- SLI 暴露（⑤.1）：/actuator/health + /actuator/prometheus，见 docs/用户文档/SLI告警建议.md §指标对照 -->
+        <!-- Groovy 脚本引擎（05 号：沙箱） -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy</artifactId>
+            <version>${groovy.version}</version>
         </dependency>
+        <!-- SLI 指标（宿主无 MeterRegistry 时自动 noop） -->
         <dependency>
             <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <!-- fwk4j-web 的 spring-jdbc 为 optional，但其 GlobalExceptionHandler 的 @ExceptionHandler 方法签名
-             引用 spring-jdbc/dao 异常类型，未携带 spring-jdbc 的消费方启动期内省即 NoClassDefFoundError
-             （上游 issue：funcommons/framework4j#19）；token-route 无数据源，补依赖绕过，上游修复后可移除 -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
+            <artifactId>micrometer-core</artifactId>
         </dependency>
 
         <dependency>
@@ -72,7 +60,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- Testcontainers：全栈部署 IT（TrRedissonLockIT，07 §1：锁 1.21.4 兼容 Docker Desktop 29） -->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
@@ -89,10 +76,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>

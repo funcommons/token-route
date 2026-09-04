@@ -15,7 +15,7 @@ import fun.commons.tokenroute.redis.TrRedis;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Service;
+
 
 import java.time.Clock;
 import java.util.ArrayList;
@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * → 亲和判定（L2 双校验）→ 策略选择（四策略）→ 原子落账（L1 绑定/预占）→ 返回/EMPTY。
  * Redis 故障 → EMPTY 不误动作（03 §6）；[TR-RESOLVE] 结构化日志 + ring 热窗。
  */
-@Service
 public class TrResolveService {
 
     private static final Logger log = LoggerFactory.getLogger(TrResolveService.class);

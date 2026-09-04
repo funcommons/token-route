@@ -219,6 +219,16 @@
 - **测试**：单测 +37（亲和服务 17 + 状态服务 7 + 拦截器 6 + MockMvc 鉴权矩阵 5 + 安全缺省 1 + OpenApiContract 路径断言更新）→ app 221 绿；IT +7（TrAffinityAdminIT 5 + TrStateAdminIT 2，含改流/排水恢复闭环）→ IT 43 绿无回退；OpenAPI 契约 5 端点同步。
 - 文档四方对齐：01 V2.2（§3.1 边界例外/§6.1 三面/§6.2 TR-ADM-001~005）/ 02 V2.2（§3.3 + §7.1 八要素）/ 配置手册（affinity-admin 两项 + env）/ 本节。
 
+## S14 嵌入式核心 SDK 库化（✅ starter 模块 + TR-CTR-003 补齐）
+
+- **动因**：MMagiX 要求「服务端 SDK 方式接入」——消费方 Java 服务进程内嵌路由核心，零网络跳。
+- **模块拆分**：核心（config 种子/脚本引擎/keyspace/redis+Lua/resolve/report/feed/ops/admin/TrMetrics）自 app **git mv** 至 **`token-route-starter`**（包名不变，历史保留；split package 无 JPMS 无影响）；app 瘦身为 HTTP 壳（web/auth/actuator），TrConfig 只留两面鉴权 + 内部鉴权 + 健康组件；TrRedissonLockIT（全栈上下文 IT）留 app。
+- **自动装配**：`TrStarterAutoConfiguration`（@AutoConfiguration + tr.enabled 总开关缺省开）注册全套 bean——宿主提供 `MultiRedisManager`（fwk4j-redis 装配产物）即可；`ObjectProvider<MeterRegistry>` 缺省 noop；表种子 fail-fast 随宿主配置；注册文件 AutoConfiguration.imports。**搬迁类上的类级 @Service/@Component 全部移除**（防组件扫描与自动装配双注册）。
+- **TrRouteEngine 门面**：resolve/report/detach 进程内直调；**评估器改自管 daemon 线程**（`TrEvaluatorScheduler` fixedDelay 60s，不 @EnableScheduling——不动宿主调度语义）。
+- **补齐 TR-CTR-003 detach**（契约/OpenAPI/SDK 已有而实现缺失）：内核 `TrRouteEngine.detach`（DEL + DETACH 事件 by=CONSUMER，幂等）+ app `POST /v1/affinity/detach`（10400/10100 校验）。
+- **测试**：新增 TrStarterAutoConfigurationTest 4（装配矩阵/总开关/评估器开关/坏种子 fail-fast）+ TrRouteEngineTest 6（委托/detach 内核/幂等）+ TrDetachControllerTest 3 + TrDetachIT 1（真实 Redis 建绑→HIT→detach→重绑 NEW 闭环）→ 单测 starter 189 + app 44 + sdk 9 = **242 绿**；IT starter 42 + app 2 = **44 绿**；`mvn verify -Dtr.it=true` 四模块 jacoco 门槛全过。
+- 文档：**新增 `docs/用户文档/03_嵌入式SDK接入指南.md`**（对比表/宿主前置排除链/配置/门面用法/管理注入/混布语义/纪律速查）；01 V2.3（§7.2 嵌入式行 + 修订史）；README 双坐标；配置手册 tr.enabled；接入手册 §6 指路；CI artifact 补 starter。
+
 ## P1 收尾状态（全部出口闸门通过）
 
 - 全模块 `mvn test`：**app 216 + sdk 9 = 225 绿**；IT（Testcontainers，failsafe）：**34 绿**；冒烟 8 组 ×2 全绿。

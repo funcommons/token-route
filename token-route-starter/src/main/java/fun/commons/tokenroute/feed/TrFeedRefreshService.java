@@ -9,7 +9,7 @@ import fun.commons.tokenroute.resolve.TrEntryId;
 import fun.commons.tokenroute.resolve.TrFeedBackfill;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
+
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -30,7 +30,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * ③ 冷启动/条目 miss：TrFeedBackfill.pull（同步 3s）。
  * 纪律：失败保旧值 + 连续失败 ≥3 告警；schema 非法 10633 本次拒收；单飞防击穿（本实例互斥 + Redis 游标龄判定）。
  */
-@Service
 public class TrFeedRefreshService implements TrFeedBackfill {
 
     private static final Logger log = LoggerFactory.getLogger(TrFeedRefreshService.class);

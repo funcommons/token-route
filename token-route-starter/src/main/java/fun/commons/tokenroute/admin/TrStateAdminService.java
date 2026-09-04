@@ -9,7 +9,7 @@ import fun.commons.tokenroute.redis.TrRedis;
 import fun.commons.tokenroute.resolve.TrFeedBackfill;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
+
 
 import java.time.Clock;
 import java.util.HashMap;
@@ -25,7 +25,6 @@ import java.util.Map;
  * report 三态照常驱动——复位后新失败信号仍会正常降级/冻结（无豁免）。
  * 审计：[TR-STATE-ADMIN] 结构化日志 + 状态迁移史 ring（reason=ADMIN_RESET）。
  */
-@Service
 public class TrStateAdminService {
 
     private static final Logger audit = LoggerFactory.getLogger("TR-STATE-ADMIN");

@@ -47,6 +47,7 @@ public class TrOpsService {
         out.put("data_profile", table.getDataProfile());
         out.put("refresh_url", table.getRefreshUrl());
         out.put("status", table.getStatus());
+        out.put("metadata", table.getMetadata()); // 版本追溯元数据（issue #3 R2：策略系统发布标记原样回显）
         out.put("affinity_enabled", table.isAffinityEnabled());
         out.put("lease_ttl_seconds", table.getLeaseTtlSeconds());
         out.put("refresh_interval_seconds", table.getRefreshIntervalSeconds());

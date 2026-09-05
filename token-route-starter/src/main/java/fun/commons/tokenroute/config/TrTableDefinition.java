@@ -33,6 +33,13 @@ public class TrTableDefinition {
     /** 表状态 ACTIVE / OFFLINE（OFFLINE 注册但 resolve 走 EMPTY + TABLE_OFFLINE） */
     private String status = "ACTIVE";
 
+    /**
+     * 版本追溯元数据（可选，不进内核语义；issue #3 R2 种子生成链路）：
+     * 上游策略系统（如 TokenGo）发布种子时写入策略版本号等标记，ops 面（TR-OPS-001）原样回显——
+     * 例：metadata: { "strategy-version": "tokengo-v12", "published-at": "2026-09-05T03:00:00Z" }
+     */
+    private java.util.Map<String, String> metadata;
+
     public String getName() {
         return name;
     }
@@ -143,5 +150,13 @@ public class TrTableDefinition {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public java.util.Map<String, String> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(java.util.Map<String, String> metadata) {
+        this.metadata = metadata;
     }
 }

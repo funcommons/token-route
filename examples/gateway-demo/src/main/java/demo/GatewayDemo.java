@@ -74,7 +74,24 @@ public class GatewayDemo {
         client.detach(table, task);
         System.out.println("⑤ detach: " + task);
 
-        System.out.println("DEMO OK — resolve→report→亲和→批量回填 闭环全部通过");
+        // ⑥ 任务面 fallback（issue #4 R3 验收）：上游持续性不可用（渠道封禁/能力缺失）
+        //    → DISABLE_FAIL 立即摘除（服务端 FROZEN）→ 下一次 resolve 确定性换到另一上游
+        var f1 = client.resolve(table, task + "-f", Map.of());
+        must(f1.isOk() && f1.getData().getEntryId() != null, "⑥ fallback 首 resolve");
+        client.report(List.of(Map.of(
+                "entry_id", f1.getData().getEntryId(),
+                "lease_id", f1.getData().getLeaseId(),
+                "result", "DISABLE_FAIL",        // 持续性不可用才用（偶发失败用 RETRYABLE_FAIL）
+                "rate_units", 0.0,               // 调用前确认不可用，未耗上游资源
+                "session_id", task + "-f")));
+        var f2 = client.resolve(table, task + "-f2", Map.of());
+        must(f2.isOk() && f2.getData().getEntryId() != null
+                        && !f2.getData().getEntryId().equals(f1.getData().getEntryId()),
+                "⑥ 摘除后应换到另一上游（mock FEED 恰两条目，确定性）");
+        System.out.println("⑥ fallback: " + f1.getData().getEntryId() + " DISABLE_FAIL 摘除 → 重选 "
+                + f2.getData().getEntryId() + "（解冻=FEED 显式 ACTIVE，运维面操作）");
+
+        System.out.println("DEMO OK — resolve→report→亲和→批量回填→fallback 闭环全部通过");
     }
 
     private static String env(String k, String def) {

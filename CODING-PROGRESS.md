@@ -231,6 +231,16 @@
 - **顺手修复（S14 重构遗留 + 文档勘误）**：①根 Dockerfile 未纳入 starter 模块（app 镜像构建已断）——补 starter pom/src 拷贝；②配置手册 §3 表字段样例为 nested 写法（`affinity.*`/`feed.*`）**实际不参与绑定**（TrTableDefinition 为扁平字段，embedded-demo fail-fast 实锤）——手册/指南/示例统一改扁平并加勘误注记。
 - 文档：**新增 `docs/用户文档/03_嵌入式SDK接入指南.md`**（对比表/宿主前置排除链/配置/门面用法/管理注入/混布语义/纪律速查）；01 V2.3（§7.2 嵌入式行 + 修订史）；README 双坐标；配置手册 tr.enabled；接入手册 §6 指路；CI artifact 补 starter。
 
+## S15 TokenGo 接入确认 R1~R4（✅ issue #2~#5 本仓承接面）
+
+- **动因**：TokenGo《组件化改造方案》§13.4 R1~R4 拆到本仓的四个 issue——工作量大头在 TokenGo 侧（导出器/策略生成/门户页），本仓按分工确认承接面并补齐验收用例。
+- **R1 FEED（#2）**：`TrFeedThreeTriggerIT`——进程内 JDK HttpServer 作可热改 mock 导出器，一表串测三触发：冷启动（键不存在同步回源）/ 懒刷新（保旧值服务 + 拨老游标触发后台单飞 + 轮询收敛 v2）/ 强制 ping（pullNow 立即 v3）。契约确认：refresh_url 签名与条目 schema 以 02 §8 为准（未改）。
+- **R2 配置生成链路（#3）**：①表定义增 `metadata`（可选 map，不进内核，TR-OPS-001 原样回显）承载策略版本追溯（`strategy-version`/`published-at`）；②`TrSeedPublishRollbackIT`——版本差异由种子自带 filter 脚本表达（v1 放行渠道 A/v2 切 B），同 Redis/FEED 不动，换种子 registry 即模拟重启前后进程视图：发布生效 + ops 回显版本 + 回滚恢复；护栏确认：滚动重启无感=双实例+graceful shutdown（上线检查单），推荐 TokenGo 独立实例。
+- **R3 SDK（#4）**：SDK 本体 v1.0.0 已交付（S6）；补 gateway-demo 第 ⑥ 步任务面 fallback 用例——DISABLE_FAIL 立即摘除 → 下一次 resolve 确定性换上游（mock FEED 恰两条目），**本地全栈实测通过**（app+临时 Redis+FEED，六步 DEMO OK）。
+- **R4 运维只读（#5）**：`docs/用户文档/TokenGo只读运维页对接走查.md`——四只读接口+refresh ping 清单、双面鉴权口径（ops=jwt/tr-admin；refresh 跟随契约面）、10 分钟走查 curl 序列、只读护栏；服务本体近零改动确认（唯一新增=metadata 回显行）。
+- **测试**：单测 +4（种子 metadata 往返 1 + ops 回显 1 + 既有回归）→ starter 193/app 44/sdk 9 = 246 绿；IT +2（三态刷新/发布回滚）→ 46 绿；`mvn verify -Dtr.it=true` 全绿；gateway-demo 六步实测（新 ⑥ fallback）。
+- 文档：01 V2.4（修订史）/ 配置手册（metadata 行）/ 走查文档（新）/ 本节。
+
 ## P1 收尾状态（全部出口闸门通过）
 
 - 全模块 `mvn test`：**app 216 + sdk 9 = 225 绿**；IT（Testcontainers，failsafe）：**34 绿**；冒烟 8 组 ×2 全绿。

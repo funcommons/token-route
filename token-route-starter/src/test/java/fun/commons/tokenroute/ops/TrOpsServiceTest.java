@@ -37,11 +37,12 @@ class TrOpsServiceTest {
     private final TrKeySpace keys = new TrKeySpace("tr");
     private final ObjectMapper mapper = new ObjectMapper();
     private StringRedisTemplate t;
+    private TrRedis redis;
     private TrOpsService service;
 
     @BeforeEach
     void setUp() {
-        TrRedis redis = mock(TrRedis.class);
+        redis = mock(TrRedis.class);
         t = mock(StringRedisTemplate.class, RETURNS_DEEP_STUBS);
         when(redis.stringTemplate()).thenReturn(t);
         TrTableDefinition d = new TrTableDefinition();
@@ -60,6 +61,20 @@ class TrOpsServiceTest {
     void unknownTableRejected() {
         assertThatThrownBy(() -> service.tableStatus("ghost"))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void tableStatusEchoesSeedMetadata() {
+        // issue #3 R2：策略版本追溯标记经 TR-OPS-001 原样回显
+        when(t.opsForSet().members(keys.entryIds("t-meta"))).thenReturn(new LinkedHashSet<>());
+        TrTableDefinition d = new TrTableDefinition();
+        d.setName("t-meta");
+        d.setRefreshUrl("http://feed.example/t-meta");
+        d.setMetadata(Map.of("strategy-version", "tokengo-v2"));
+        TrOpsService metaService = new TrOpsService(redis, keys,
+                TrTableRegistry.load(List.of(d)), mapper);
+        Map<String, Object> out = metaService.tableStatus("t-meta");
+        assertThat(out.get("metadata")).isEqualTo(Map.of("strategy-version", "tokengo-v2"));
     }
 
     @Test

@@ -38,6 +38,20 @@ class TrTableSeedTest {
     }
 
     @Test
+    void metadataIsOptionalAndRoundTrips() {
+        // issue #3 R2：策略系统发布种子写入版本追溯标记，不进内核语义；缺省为 null 不影响加载
+        TrTableDefinition withMeta = seed("meta-t", "http://up/feed");
+        withMeta.setMetadata(java.util.Map.of(
+                "strategy-version", "tokengo-v12", "published-at", "2026-09-05T03:00:00Z"));
+        TrTableRegistry registry = TrTableRegistry.load(List.of(withMeta, seed("plain", "http://up/feed")));
+
+        assertThat(registry.find("meta-t").orElseThrow().getMetadata())
+                .containsEntry("strategy-version", "tokengo-v12")
+                .containsEntry("published-at", "2026-09-05T03:00:00Z");
+        assertThat(registry.find("plain").orElseThrow().getMetadata()).isNull();
+    }
+
+    @Test
     void loadRejectsMissingName_withCode10633() {
         TrTableDefinition bad = new TrTableDefinition();
         bad.setRefreshUrl("http://up/feed");
